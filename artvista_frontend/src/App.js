@@ -6,6 +6,7 @@ import AuthUI from './AuthUI';
 import { AuthProvider, useAuth } from './AuthContext';
 import MyCollection from './MyCollection';
 import DrawThisPhotoChallenge from "./DrawThisPhotoChallenge";
+import ArtistBattle from "./ArtistBattle";
 
 /**
  * Enforces authentication before allowing access to ArtVista main interface.
@@ -94,6 +95,21 @@ function AuthGateApp() {
           {activePage === "explore" && (
             <>
               <ArtOfTheDay />
+              {/* Artist Battle demo: REPLACE with your own UI integration as needed */}
+              {/* Toggle for easy demo -- ONLY for dev/test, remove/comment for prod */}
+              {/* To use, set to true and pass a valid referencePhoto prop */}
+              {/* For final use: integrate in app per UX needs */}
+              {false && (
+                <ArtistBattle
+                  referencePhoto={{
+                    imageUrl: "https://images.pexels.com/photos/417173/pexels-photo-417173.jpeg?auto=compress&w=600",
+                    source: "Pexels",
+                    photoId: "417173",
+                    meta: { photographer: "Pixabay" }
+                  }}
+                  battleId={undefined}  // let component auto-create new battle
+                />
+              )}
               {/* Draw This Photo Challenge inserted here */}
               <DrawThisPhotoChallenge />
               {/* Render ArtFeed with all its internal state/handlers restored (no props) */}

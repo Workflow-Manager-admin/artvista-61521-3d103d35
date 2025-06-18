@@ -23,4 +23,58 @@ cacheable modules 1.33 MiB
       ./.ve/EditorOverlay.css 2.25 KiB [built] [code generated]
       ./node_modules/css-loader/dist/cjs.js!./.ve/EditorOverlay.css 697 bytes [built] [code generated]
     ./.ve/EditorOverlay.jsx 1.58 KiB [built] [code generated]
-webpack 5.99.9 compiled successfully in 1408 ms
+webpack 5.99.9 compiled successfully in 1403 ms
+assets by status 1.98 KiB [cached] 1 asset
+assets by path *.js 3.97 MiB
+  asset bundle.js 2.72 MiB [emitted] (name: main)
+  asset main.dc7ff57c0d280904441a.hot-update.js 1.25 MiB [emitted] [immutable] [hmr] (name: main)
+asset main.dc7ff57c0d280904441a.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 3.97 MiB = bundle.js 2.72 MiB main.dc7ff57c0d280904441a.hot-update.js 1.25 MiB
+cached modules 1.32 MiB [cached] 47 modules
+runtime modules 27.5 KiB 14 modules
+javascript modules 1.16 MiB
+  modules by path ./node_modules/ 1.13 MiB
+    modules by path ./node_modules/@firebase/ 1.11 MiB 7 modules
+    modules by path ./node_modules/firebase/ 975 bytes 3 modules
+    modules by path ./node_modules/idb/build/*.js 10.8 KiB
+      ./node_modules/idb/build/index.js 3.44 KiB [built] [code generated]
+      ./node_modules/idb/build/wrap-idb-value.js 7.32 KiB [built] [code generated]
+  modules by path ./src/*.js 30.4 KiB
+    ./src/App.js 6.69 KiB [built] [code generated]
+    ./src/ArtistBattle.js 17.1 KiB [built] [code generated]
+    ./src/firestoreDataModel.js 5.71 KiB [built] [code generated]
+    ./src/firebase.js 923 bytes [built] [code generated]
+webpack 5.99.9 compiled successfully in 768 ms
+assets by status 1.98 KiB [cached] 1 asset
+assets by path *.js 2.73 MiB
+  asset bundle.js 2.72 MiB [emitted] (name: main)
+  asset main.9151c559a069f0283de4.hot-update.js 11.5 KiB [emitted] [immutable] [hmr] (name: main)
+asset main.9151c559a069f0283de4.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 2.73 MiB = bundle.js 2.72 MiB main.9151c559a069f0283de4.hot-update.js 11.5 KiB
+cached modules 2.47 MiB [cached] 62 modules
+runtime modules 27.5 KiB 14 modules
+./src/App.js 7.17 KiB [built] [code generated]
+webpack 5.99.9 compiled successfully in 60 ms
+Injecting EditorRootWrapper import: ../.ve/EditorRootWrapper
+assets by path *.js 2.72 MiB
+  asset bundle.js 2.72 MiB [emitted] (name: main)
+  asset main.37d4cd474e7c59b1e1fc.hot-update.js 854 bytes [emitted] [immutable] [hmr] (name: main)
+asset index.html 1.98 KiB [emitted]
+asset main.37d4cd474e7c59b1e1fc.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 2.72 MiB = bundle.js 2.72 MiB main.37d4cd474e7c59b1e1fc.hot-update.js 854 bytes
+cached modules 2.38 MiB [cached] 49 modules
+runtime modules 27.5 KiB 14 modules
+javascript modules 98.6 KiB
+  modules by path ./src/*.js 86.4 KiB
+    ./src/index.js 530 bytes [built]
+    ./src/App.js 7.17 KiB [built]
+    ./src/ArtFeed.js 19.4 KiB [built]
+    ./src/AuthContext.js 1.51 KiB [built]
+    ./src/ArtOfTheDay.js 7 KiB [built]
+    ./src/AuthUI.js 3.38 KiB [built]
+    + 5 modules
+  modules by path ./.ve/ 12.2 KiB
+    ./.ve/EditorRootWrapper.js 2.68 KiB [built]
+    ./.ve/EditorOverlay.jsx 1.58 KiB [built]
+    ./.ve/SidePanel.js 7.93 KiB [built]
+webpack 5.99.9 compiled successfully in 274 ms
