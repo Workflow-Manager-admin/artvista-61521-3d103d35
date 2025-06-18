@@ -425,7 +425,7 @@ function VotingArea({ battle, battleId, user }) {
     fetchArtworks();
   }, [battle.artworkAId, battle.artworkBId]);
 
-  // Listen to votes changes in real-time
+  // --- Live vote listener (observe Firestore changes for this battle) ---
   useEffect(() => {
     if (!battleId) return;
     const unsub = onSnapshot(doc(db, "battles", battleId), (snap) => {
@@ -436,11 +436,11 @@ function VotingArea({ battle, battleId, user }) {
     return unsub;
   }, [battleId]);
 
-  // On mount, check if the user/device has voted (user: Firestore, anon: localStorage)
+  // --- Check if the user/device has already voted ---
   useEffect(() => {
     let aborted = false;
     async function checkVoted() {
-      // Try username context first
+      // Try username context first for logged-in users
       if (user && battleId) {
         const q = query(
           votesCol,
@@ -454,7 +454,7 @@ function VotingArea({ battle, battleId, user }) {
           return;
         }
       }
-      // Fallback: check localStorage (per-device voting)
+      // Fallback: check localStorage for device-based voting
       try {
         const local = localStorage.getItem(localVoteKey);
         if (local) {
@@ -466,7 +466,6 @@ function VotingArea({ battle, battleId, user }) {
     }
     checkVoted();
     return () => { aborted = true; };
-    // eslint-disable-next-line
   }, [user, battleId]);
 
   // PUBLIC_INTERFACE
@@ -486,7 +485,7 @@ function VotingArea({ battle, battleId, user }) {
         setVoteSubmitting(false);
         return;
       }
-      // If logged-in, check again (defensive race/parallel tabs)
+      // If logged-in, check again (defensive double prevention)
       if (user) {
         const q = query(
           votesCol,
@@ -510,8 +509,7 @@ function VotingArea({ battle, battleId, user }) {
           return;
         }
       }
-
-      // Add vote to Firestore if logged-in, else just set localStorage and update tally in Firestore
+      // --- Submit vote ---
       if (user) {
         await addDoc(votesCol, {
           battleId,
@@ -520,11 +518,9 @@ function VotingArea({ battle, battleId, user }) {
           votedAt: serverTimestamp(),
         });
       } else {
-        // Assign per-device per-battle vote tracking only
         try { localStorage.setItem(localVoteKey, slot); } catch {/* ignore */}
       }
-
-      // Update battle tally atomically
+      // Update vote tally in Firestore (optimistic, real-time sync ensures UI is accurate)
       const battleDocRef = doc(db, "battles", battleId);
       const voteUpdate =
         slot === "A"
@@ -539,7 +535,7 @@ function VotingArea({ battle, battleId, user }) {
     setVoteSubmitting(false);
   }
 
-  // Voting UI as before with live updating counts and stateful disabled
+  // --- Stylish Voting UI with LIVE updating and voted/disabled state ---
   return (
     <section
       className="artist-battle-voting"
@@ -633,7 +629,11 @@ function VotingArea({ battle, battleId, user }) {
               fontWeight: 800,
               fontSize: "1.01em",
               borderRadius: 32,
-              padding: "7px 20px"
+              padding: "7px 20px",
+              pointerEvents: voteSubmitting || !!userVoteFor ? 'none' : undefined,
+              opacity: voteSubmitting || !!userVoteFor ? 0.71 : 1,
+              boxShadow: userVoteFor === "A" ? "0 0 0 3px var(--primary-tint,#ffe2f1)" : undefined,
+              cursor: voteSubmitting || !!userVoteFor ? 'not-allowed' : 'pointer'
             }}
             onClick={() => handleVote("A")}
             aria-label="Vote for Artist A"
@@ -642,11 +642,16 @@ function VotingArea({ battle, battleId, user }) {
               ? (userVoteFor === "A" ? "Voted!" : "Vote")
               : (voteSubmitting ? "Voting..." : "Vote")}
           </button>
-          <div style={{fontSize: "1.11em", color: "#d8225c", fontWeight: 700, marginTop: 8}}>
+          <div style={{
+            fontSize: "1.11em",
+            color: "#d8225c",
+            fontWeight: 700,
+            marginTop: 8,
+            transition: "all 0.18s"
+          }}>
             {votesA} {votesA === 1 ? "Vote" : "Votes"}
           </div>
         </div>
-
         {/* Artwork B box */}
         <div style={{
           flex: 1,
@@ -690,7 +695,11 @@ function VotingArea({ battle, battleId, user }) {
               fontWeight: 800,
               fontSize: "1.01em",
               borderRadius: 32,
-              padding: "7px 20px"
+              padding: "7px 20px",
+              pointerEvents: voteSubmitting || !!userVoteFor ? 'none' : undefined,
+              opacity: voteSubmitting || !!userVoteFor ? 0.71 : 1,
+              boxShadow: userVoteFor === "B" ? "0 0 0 3px var(--primary-tint,#ffe2f1)" : undefined,
+              cursor: voteSubmitting || !!userVoteFor ? 'not-allowed' : 'pointer'
             }}
             onClick={() => handleVote("B")}
             aria-label="Vote for Artist B"
@@ -699,14 +708,28 @@ function VotingArea({ battle, battleId, user }) {
               ? (userVoteFor === "B" ? "Voted!" : "Vote")
               : (voteSubmitting ? "Voting..." : "Vote")}
           </button>
-          <div style={{fontSize: "1.11em", color: "#d8225c", fontWeight: 700, marginTop: 8}}>
+          <div style={{
+            fontSize: "1.11em",
+            color: "#d8225c",
+            fontWeight: 700,
+            marginTop: 8,
+            transition: "all 0.18s"
+          }}>
             {votesB} {votesB === 1 ? "Vote" : "Votes"}
           </div>
         </div>
       </div>
       {/* Final message if voted */}
       {userVoteFor && (
-        <div style={{ color: "#18aa60", fontSize: "1.07em", fontWeight: 500, marginTop: 7 }}>
+        <div style={{
+          color: "#18aa60",
+          fontSize: "1.07em",
+          fontWeight: 500,
+          marginTop: 7,
+          background: "rgba(24,170,96, 0.10)",
+          borderRadius: 8,
+          padding: "8px 14px",
+        }}>
           Thanks for voting! Want to invite a friend to vote? Share this battle's link!
         </div>
       )}
