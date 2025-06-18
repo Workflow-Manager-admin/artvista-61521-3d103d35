@@ -2,100 +2,158 @@ import React, { useEffect, useState } from 'react';
 import './Sidebar.css';
 
 // PUBLIC_INTERFACE
+/**
+ * Sidebar component fetches and displays art-related news from newsdata.io.
+ * Features:
+ * - Robust HTTP and JSON error handling.
+ * - Explicit detection and messaging for CORS errors and network failures.
+ * - Proactive user guidance in-app and in developer console if issues occur.
+ * - Maintains clean, styled, accessible news card list layout.
+ */
 function Sidebar() {
-  /**
-   * Sidebar component fetches and displays art-related news.
-   * News are fetched from newsdata.io public API and shown as a list of cards
-   * Each card: title, snippet/description, and a link to the article.
-   * Fetch logic is robust and includes detailed logging and error handling.
-   */
-
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState(null);
-  const [errorDetails, setErrorDetails] = useState(null); // For troubleshooting details
+  const [errorDetails, setErrorDetails] = useState(null); // For developer troubleshooting
 
   useEffect(() => {
-    /**
-     * Fetch the latest art-related news from newsdata.io.
-     * - Endpoint: https://newsdata.io/api/1/news
-     * - Required params: apikey, q (search), category, language
-     * - Handles error states, CORS, and network issues.
-     * - Console logs details useful for debugging.
-     *
-     * NOTE: If you see a CORS error, newsdata.io may not allow raw browser requests for your API key (you may need a proxy server).
-     * See: https://newsdata.io/docs for restrictions.
-     */
-    const apiKey = 'pub_7009dcb5bea84ab48ddd0213f4cadc9f';
-    const query = 'art OR artwork OR gallery OR artist OR painting OR museum';
-    const url = `https://newsdata.io/api/1/news?apikey=${apiKey}&q=${encodeURIComponent(
-      query
-    )}&language=en&category=arts`;
+    // --- ART NEWS FETCH LOGIC WITH FULL ERROR HANDLING + CORS DETECTION ---
+    const API_KEY = 'pub_7009dcb5bea84ab48ddd0213f4cadc9f';
+    const QUERY = 'art OR artwork OR gallery OR artist OR painting OR museum';
+    const CATEGORIES = 'arts'; // newsdata.io "arts" category
+    const LANGUAGE = 'en';
+
+    // Build request URL
+    const newsUrl =
+      `https://newsdata.io/api/1/news?apikey=${API_KEY}` +
+      `&q=${encodeURIComponent(QUERY)}` +
+      `&category=${CATEGORIES}&language=${LANGUAGE}`;
 
     setLoading(true);
     setApiError(null);
     setErrorDetails(null);
 
-    fetch(url)
-      .then(async res => {
+    fetch(newsUrl)
+      .then(async (res) => {
+        // HTTP-level error handling
         if (!res.ok) {
-          // Special CORS error codes do not always produce a res here!
-          let text = await res.text().catch(() => '');
-          let errorMsg = `Network response was not ok (status ${res.status}). Response text: ${text}`;
-          // Log full error for developer
+          let errorText = '';
+          try {
+            errorText = await res.text();
+          } catch {
+            errorText = '';
+          }
+          let errMsg = `[Sidebar] HTTP error: ${res.status} — ${errorText}`;
           // eslint-disable-next-line no-console
-          console.error('[Sidebar] News fetch error:', errorMsg);
-          setErrorDetails(errorMsg);
-          throw new Error(errorMsg);
+          console.error('[Sidebar] News fetch HTTP error:', errMsg);
+          setErrorDetails(
+            `HTTP Error Code: ${res.status}\nRaw response: ${errorText || '<none>'}`
+          );
+          throw new Error(errMsg);
         }
-        return res.json();
+        // Try to parse the response as JSON; if not, treat as CORS or backend issue
+        try {
+          return await res.json();
+        } catch (parseErr) {
+          // Detect CORS or API limit response masquerading as text HTML
+          let text = '';
+          try {
+            text = await res.text();
+          } catch { /* no-op */ }
+          let likelyCORS = (typeof text === 'string') &&
+            (
+              text.includes('CORS') ||
+              text.match(/Access-Control-Allow-Origin/i) ||
+              text.match(/api key/i)
+            );
+          if (likelyCORS) {
+            // eslint-disable-next-line no-console
+            console.error('[Sidebar] Possible CORS error on fetch:', text);
+            setErrorDetails(`Possible CORS error (see https://newsdata.io/docs for CORS support)\nRaw: ${text}`);
+            throw new Error('CORS error: The API endpoint blocked browser access. Consider using a proxy server.');
+          }
+          // eslint-disable-next-line no-console
+          console.error('[Sidebar] News fetch invalid JSON:', text);
+          setErrorDetails(`Non-JSON (unexpected) response: ${text}`);
+          throw new Error('API returned an unexpected/non-JSON response.');
+        }
       })
-      .then(data => {
-        // newsdata.io metadata: {status: "success"|"error"}; results: [articles]
+      .then((data) => {
+        // API-level (JSON) error handling
         if (
           data &&
-          (data.status === "success" || data.status === undefined) &&
+          (data.status === "success" || typeof data.status === 'undefined') &&
           Array.isArray(data.results) &&
           data.results.length > 0
         ) {
           setNews(data.results.slice(0, 7));
+          setApiError(null);
           setErrorDetails(null);
         } else {
-          setNews([]);
+          // Failures detected by API status/fields
           let errorMsg;
           if (data && data.status === "error" && data.message) {
             errorMsg = `Failed to load news: ${data.message}`;
-          } else if (typeof data === 'string' && data.includes("CORS")) {
-            // Custom catch for CORS error in string response
-            errorMsg = 'CORS error: newsdata.io rejected this request from frontend (browser). You may need a server proxy.';
+            // eslint-disable-next-line no-console
+            console.error('[Sidebar] News fetch API returned error:', data);
+          } else if (data && Array.isArray(data.results) && data.results.length === 0) {
+            errorMsg = "No recent news related to art at this time.";
+          } else if (data && typeof data === "object" && data.message) {
+            errorMsg = `Unexpected API response: ${data.message}`;
           } else {
-            errorMsg = 'No news articles found.';
+            errorMsg = 'No news articles found, or API did not return results as expected.';
+            // eslint-disable-next-line no-console
+            console.error('[Sidebar] News fetch unknown/empty response:', data);
           }
           setApiError(errorMsg);
+          setNews([]);
           setErrorDetails(
             `[Sidebar] API error. Raw response: ${JSON.stringify(data)}`
           );
-          // eslint-disable-next-line no-console
-          console.error('[Sidebar] News fetch returned error state. Data:', data);
         }
         setLoading(false);
       })
-      .catch(err => {
-        // developer-mode log always for fetch errors
+      .catch((err) => {
+        // Network issues, CORS, or other generic errors
         // eslint-disable-next-line no-console
-        console.error('[Sidebar] General News Fetch Error:', err);
-        setApiError('Failed to load news.');
+        if (err.message && err.message.includes('CORS')) {
+          console.error('[Sidebar] News fetch CORS/network problem:', err);
+        } else {
+          console.error('[Sidebar] General News Fetch Error:', err);
+        }
+        setApiError(() =>
+          err.message && err.message.includes("CORS")
+            ? (
+              <span>
+                News source unavailable due to CORS restriction.<br />
+                <span style={{ fontSize: '0.96em' }}>
+                  This API endpoint may only be directly accessed from a server/backend—browsers are blocked.<br />
+                  <b>To fix:</b> Use a serverless proxy (like <a href="https://corsproxy.io/" style={{ color: '#ff88d0', textDecoration: 'underline' }} target="_blank" rel="noopener noreferrer">CORS proxy</a>), or host your own proxy.
+                </span>
+              </span>
+            )
+            : (
+              <>
+                Failed to load news.<br />
+                <span style={{ fontSize: '0.97em', color: '#dde' }}>
+                  {(err && err.message) || "Unknown error"}
+                </span>
+              </>
+            )
+        );
         setErrorDetails(
-          `[Sidebar] Fetch failed: ${err.message}.\n` +
+          `[Sidebar] Fetch failed: ${err && err.message}\n` +
           'If this was a CORS error, check newsdata.io API browser access policy. ' +
-          'Try a serverless proxy if needed.'
+          'Try a server/serverless proxy if needed. For dev use, see: https://newsdata.io/support'
         );
         setNews([]);
         setLoading(false);
       });
+    // End of useEffect
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Render error details for troubleshooting (dev mode UX)
+  // Developer troubleshooting details (rendered in UI for visibility)
   function ErrorDetails() {
     if (!errorDetails) return null;
     return (
@@ -103,11 +161,11 @@ function Sidebar() {
         style={{
           color: '#ff6d6d',
           background: 'rgba(30,5,5,0.13)',
-          fontSize: '0.81rem',
+          fontSize: '0.8em',
           margin: '8px 0 0 0',
           padding: '7px 12px',
           borderRadius: '4px',
-          overflowX: 'auto'
+          overflowX: 'auto',
         }}
         aria-label="Fetch error details"
       >
@@ -116,12 +174,13 @@ function Sidebar() {
     );
   }
 
+  // UI rendering for sidebar news
   return (
     <aside className="sidebar-art-news" aria-label="Art News Sidebar">
       <h2 className="sidebar-title">Art News</h2>
-      {loading && <div className="sidebar-loading">Loading...</div>}
+      {loading && <div className="sidebar-loading">Loading latest art news...</div>}
       {apiError && (
-        <div className="sidebar-error">
+        <div className="sidebar-error" role="alert">
           {apiError}
           <ErrorDetails />
         </div>
@@ -133,28 +192,28 @@ function Sidebar() {
               No news available.
             </li>
           )}
-          {news.length > 0 &&
-            news.map((article, idx) => (
-              <li className="sidebar-news-card" key={article.link || article.url || idx}>
-                <a
-                  className="sidebar-news-link"
-                  href={article.link || article.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title={article.title}
-                >
-                  <span className="sidebar-news-title">{article.title}</span>
-                </a>
-                <p className="sidebar-news-desc">
-                  {article.description
-                    ? article.description.slice(0, 120) + (article.description.length > 120 ? '...' : '')
-                    : ''}
-                </p>
-                <span className="sidebar-news-source">
-                  {article.source_id ? `Source: ${article.source_id}` : ''}
-                </span>
-              </li>
-            ))}
+          {news.map((article, idx) => (
+            <li className="sidebar-news-card" key={article.link || article.url || idx}>
+              <a
+                className="sidebar-news-link"
+                href={article.link || article.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={article.title}
+              >
+                <span className="sidebar-news-title">{article.title}</span>
+              </a>
+              <p className="sidebar-news-desc">
+                {article.description
+                  ? article.description.slice(0, 120) +
+                    (article.description.length > 120 ? "..." : "")
+                  : ''}
+              </p>
+              <span className="sidebar-news-source">
+                {article.source_id ? `Source: ${article.source_id}` : ''}
+              </span>
+            </li>
+          ))}
         </ul>
       )}
     </aside>
