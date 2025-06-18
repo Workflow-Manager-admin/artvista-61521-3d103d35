@@ -1,12 +1,13 @@
 import React from 'react';
 import './App.css';
 import ArtFeed from './ArtFeed';
+import ArtOfTheDay from './ArtOfTheDay';
 
+// PUBLIC_INTERFACE
+/**
+ * Main application container focusing on the art feed with "Art of the Day" featured banner above it.
+ */
 function App() {
-  // PUBLIC_INTERFACE
-  /**
-   * Main application container focusing on the art feed (no news sidebar).
-   */
   return (
     <div className="app" style={{ background: "none" }}>
       <nav className="navbar">
@@ -23,6 +24,7 @@ function App() {
 
       <main style={{ flex: 1, marginTop: '86px', minHeight: '100vh', background: "none" }}>
         <div className="container">
+          <ArtOfTheDay />
           <ArtFeed />
         </div>
       </main>
