@@ -7,24 +7,20 @@ import {
   updateDoc,
   serverTimestamp,
   onSnapshot,
+  query,
+  where,
+  collection,
+  getDocs
 } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { battlesCol, artworksCol } from "./firestoreDataModel";
+import { battlesCol, artworksCol, votesCol } from "./firestoreDataModel";
 import { db } from "./firebase";
 import { useAuth } from "./AuthContext";
 
 /**
  * ArtistBattle interface for 2 users to join, see a reference photo,
  * upload their artworks, and store it all in Firebase/Firestore.
- * Prepares state for subsequent voting feature.
- *
- * Features:
- * - Reference image display
- * - Battle joining: 2 users (A/B)
- * - Upload areas for both users, upload to Firebase Storage
- * - Stores battle metadata and artwork metadata in Firestore
- * - Real-time updates via onSnapshot for battle progress
- * - Clean, minimal UI matching ArtVista style
+ * With added voting UI and logic.
  *
  * Props:
  *   referencePhoto: { imageUrl, source, photoId, meta }
@@ -376,10 +372,313 @@ function ArtistBattle({ referencePhoto, battleId: propBattleId }) {
       {successMsg && <div style={{color: "#18aa60", fontWeight: 500, marginBottom:8}}>{successMsg}</div>}
       {status === "completed" && (
         <div style={{color: "#FF69B4", fontWeight:700, fontSize:"1.18em",marginTop:9}}>
-          Both artworks are in! Voting will open soon.
+          Both artworks are in! Voting is now open below.
         </div>
       )}
-      {/* Ready for voting: future voting UI goes here */}
+
+      {/* --- Voting UI: Only appear after both artworks submitted (status === "completed" or voting) --- */}
+      {(status === "completed" || status === "voting") && (
+        <VotingArea
+          battle={battle}
+          battleId={battleId}
+          user={user}
+        />
+      )}
+    </section>
+  );
+}
+
+// PUBLIC_INTERFACE
+/**
+ * VotingArea component shows both artworks and allows the user to vote once.
+ * Realtime updates, disables voting after user's vote submission in this battle.
+ */
+function VotingArea({ battle, battleId, user }) {
+  const [artworkAUrl, setArtworkAUrl] = useState(null);
+  const [artworkBUrl, setArtworkBUrl] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [voteSubmitting, setVoteSubmitting] = useState(false);
+  const [voteError, setVoteError] = useState(null);
+  const [userVoteFor, setUserVoteFor] = useState(null);
+  const [votesA, setVotesA] = useState(battle.votesA || 0);
+  const [votesB, setVotesB] = useState(battle.votesB || 0);
+
+  // Fetch artworks images once
+  useEffect(() => {
+    async function fetchArtworks() {
+      setLoading(true);
+      try {
+        if (battle.artworkAId) {
+          const docA = await getDoc(doc(db, "artworks", battle.artworkAId));
+          if (docA.exists()) setArtworkAUrl(docA.data().imageUrl || "");
+        }
+        if (battle.artworkBId) {
+          const docB = await getDoc(doc(db, "artworks", battle.artworkBId));
+          if (docB.exists()) setArtworkBUrl(docB.data().imageUrl || "");
+        }
+      } catch (err) {/* ignore for now */}
+      setLoading(false);
+    }
+    fetchArtworks();
+  }, [battle.artworkAId, battle.artworkBId]);
+
+  // Listen to votes changes in real-time
+  useEffect(() => {
+    if (!battleId) return;
+    const unsub = onSnapshot(doc(db, "battles", battleId), (snap) => {
+      const data = snap.data();
+      setVotesA(data.votesA || 0);
+      setVotesB(data.votesB || 0);
+    });
+    return unsub;
+  }, [battleId]);
+
+  // On mount, check if user has already voted in this battle
+  useEffect(() => {
+    async function checkVoted() {
+      if (!user || !battleId) return;
+      const q = query(
+        votesCol,
+        where("battleId", "==", battleId),
+        where("voterId", "==", user)
+      );
+      const voteSnap = await getDocs(q);
+      if (!voteSnap.empty) {
+        // Only one vote per user per battle
+        const voteDoc = voteSnap.docs[0];
+        setUserVoteFor(voteDoc.data().votedFor);
+      }
+    }
+    checkVoted();
+  }, [user, battleId]);
+
+  // PUBLIC_INTERFACE
+  /** Handle user voting for one slot ("A" | "B") */
+  async function handleVote(slot) {
+    setVoteSubmitting(true);
+    setVoteError(null);
+    try {
+      if (!user) {
+        setVoteError("You must be logged in to vote.");
+        setVoteSubmitting(false);
+        return;
+      }
+      // Prevent double vote race:
+      if (userVoteFor) {
+        setVoteError("You have already voted.");
+        setVoteSubmitting(false);
+        return;
+      }
+
+      // Record in votes collection - only if not voted yet
+      const q = query(
+        votesCol,
+        where("battleId", "==", battleId),
+        where("voterId", "==", user)
+      );
+      const userVoteDocs = await getDocs(q);
+      if (!userVoteDocs.empty) {
+        setUserVoteFor(userVoteDocs.docs[0].data().votedFor);
+        setVoteSubmitting(false);
+        return;
+      }
+
+      // Add vote document
+      await addDoc(votesCol, {
+        battleId,
+        voterId: user,
+        votedFor: slot,
+        votedAt: serverTimestamp(),
+      });
+
+      // Update battle tally atomically
+      const battleDocRef = doc(db, "battles", battleId);
+      const voteUpdate =
+        slot === "A"
+          ? { votesA: (votesA || 0) + 1 }
+          : { votesB: (votesB || 0) + 1 };
+      await updateDoc(battleDocRef, voteUpdate);
+
+      setUserVoteFor(slot);
+    } catch (err) {
+      setVoteError("Unable to submit vote: " + (err.message || "Unknown error"));
+    }
+    setVoteSubmitting(false);
+  }
+
+  // Determine disabled state if user is an artist (optional, allow spectator voting)
+  // Optionally, could disable voting for artistA on own artwork (currently: can vote for anyone)
+
+  return (
+    <section
+      className="artist-battle-voting"
+      style={{
+        background: "linear-gradient(122deg, var(--white-soft,#fcfaff), var(--secondary-tint,#f6f2fe) 60%)",
+        borderRadius: 18,
+        boxShadow: "0 3px 18px 0 rgba(255,137,182,0.07)",
+        marginTop: 20,
+        marginBottom: 13,
+        padding: "22px 9px 18px 9px",
+        maxWidth: 890,
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center"
+      }}
+    >
+      <h3 style={{
+        color:"var(--primary-color,#6A0DAD)",
+        fontWeight:800,
+        fontSize:"1.37rem",
+        marginBottom: "0.65em"
+      }}>
+        Vote for the Best Artwork!
+      </h3>
+      <div style={{color:"var(--text-secondary)", fontWeight: 500, marginBottom: 14, fontSize:"1.09em"}}>
+        Which artwork best captures the reference? Cast your vote below. <br />
+        <strong>Vote counts update in real time.</strong>
+      </div>
+      {voteError && (
+        <div style={{
+          color: "#d8225c",
+          background: "rgba(255,137,182,0.13)",
+          fontWeight: 500,
+          borderRadius: 12,
+          padding: "7px 22px",
+          marginBottom: 6
+        }}>
+          {voteError}
+        </div>
+      )}
+      <div style={{
+        display: "flex",
+        flexDirection: "row",
+        gap: 42,
+        justifyContent: "center",
+        width: "100%",
+        maxWidth: 780,
+        marginBottom: 7,
+      }}>
+        {/* Artwork A box */}
+        <div style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          background: "#fcfaff",
+          borderRadius: 14,
+          boxShadow: "0 2px 10px 0 rgba(200,150,220,0.07)",
+          padding: "9px 10px 15px 10px",
+          minWidth: 195,
+          maxWidth: 318,
+        }}>
+          <div style={{fontWeight: 600, color: "#6A0DAD", fontSize:"1.07em", marginBottom: 5, marginTop: 2}}>Artist A</div>
+          <div style={{ fontSize: "0.99em", marginBottom: 7, color: "var(--accent-color,#ff69b4)" }}>
+            {battle.artistA && <span>{battle.artistA}</span>}
+          </div>
+          {artworkAUrl ? (
+            <img
+              src={artworkAUrl}
+              alt="Artwork A"
+              style={{
+                maxWidth: 215,
+                maxHeight: 165,
+                borderRadius: 9,
+                objectFit: "contain",
+                marginBottom: 8,
+                background: "#f6f2fe"
+              }}
+            />
+          ) : (
+            <div style={{ minHeight: 80, marginBottom: 11 }}>Loading...</div>
+          )}
+          <button
+            disabled={voteSubmitting || !!userVoteFor}
+            className="btn"
+            style={{
+              background: userVoteFor === "A" ? "#ffe2f1" : "#fad7ef",
+              color: "#8d5fc5",
+              marginTop: 8,
+              fontWeight: 800,
+              fontSize: "1.01em",
+              borderRadius: 32,
+              padding: "7px 20px"
+            }}
+            onClick={() => handleVote("A")}
+            aria-label="Vote for Artist A"
+          >
+            {userVoteFor
+              ? (userVoteFor === "A" ? "Voted!" : "Vote")
+              : (voteSubmitting ? "Voting..." : "Vote")}
+          </button>
+          <div style={{fontSize: "1.11em", color: "#d8225c", fontWeight: 700, marginTop: 8}}>
+            {votesA} {votesA === 1 ? "Vote" : "Votes"}
+          </div>
+        </div>
+
+        {/* Artwork B box */}
+        <div style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          background: "#fcfaff",
+          borderRadius: 14,
+          boxShadow: "0 2px 10px 0 rgba(200,150,220,0.07)",
+          padding: "9px 10px 15px 10px",
+          minWidth: 195,
+          maxWidth: 318,
+        }}>
+          <div style={{fontWeight: 600, color: "#6A0DAD", fontSize:"1.07em", marginBottom: 5, marginTop: 2}}>Artist B</div>
+          <div style={{ fontSize: "0.99em", marginBottom: 7, color: "var(--accent-color,#ff69b4)" }}>
+            {battle.artistB && <span>{battle.artistB}</span>}
+          </div>
+          {artworkBUrl ? (
+            <img
+              src={artworkBUrl}
+              alt="Artwork B"
+              style={{
+                maxWidth: 215,
+                maxHeight: 165,
+                borderRadius: 9,
+                objectFit: "contain",
+                marginBottom: 8,
+                background: "#f6f2fe"
+              }}
+            />
+          ) : (
+            <div style={{ minHeight: 80, marginBottom: 11 }}>Loading...</div>
+          )}
+          <button
+            disabled={voteSubmitting || !!userVoteFor}
+            className="btn"
+            style={{
+              background: userVoteFor === "B" ? "#ffe2f1" : "#fad7ef",
+              color: "#8d5fc5",
+              marginTop: 8,
+              fontWeight: 800,
+              fontSize: "1.01em",
+              borderRadius: 32,
+              padding: "7px 20px"
+            }}
+            onClick={() => handleVote("B")}
+            aria-label="Vote for Artist B"
+          >
+            {userVoteFor
+              ? (userVoteFor === "B" ? "Voted!" : "Vote")
+              : (voteSubmitting ? "Voting..." : "Vote")}
+          </button>
+          <div style={{fontSize: "1.11em", color: "#d8225c", fontWeight: 700, marginTop: 8}}>
+            {votesB} {votesB === 1 ? "Vote" : "Votes"}
+          </div>
+        </div>
+      </div>
+      {/* Final message if voted */}
+      {userVoteFor && (
+        <div style={{ color: "#18aa60", fontSize: "1.07em", fontWeight: 500, marginTop: 7 }}>
+          Thanks for voting! Want to invite a friend to vote? Share this battle's link!
+        </div>
+      )}
     </section>
   );
 }
