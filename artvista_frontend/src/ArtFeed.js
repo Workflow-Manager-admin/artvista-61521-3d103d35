@@ -340,33 +340,49 @@ function ArtFeed() {
       removeFromLocal(artworkId);
     }
 
+    // Defensive: filter out undefined artworks and artworks missing required image info
+    const filteredArtworks = Array.isArray(artworks)
+      ? artworks.filter(art => {
+          if (!art) return false;
+          if (source === "Pexels") {
+            // For Pexels, require art.src and some form of image
+            return art.src?.medium || art.src?.original;
+          } else if (source === "Pixabay") {
+            // For Pixabay, require webformatURL
+            return !!art.webformatURL;
+          }
+          return false;
+        })
+      : [];
     return (
       <div className="art-feed-grid">
-        {artworks.length === 0 && (
+        {filteredArtworks.length === 0 && (
           <div className="art-feed-empty">No artworks found.</div>
         )}
-        {artworks.map((art, idx) => {
-          // Pexels and Pixabay have slightly different fields
+        {filteredArtworks.map((art, idx) => {
+          // Defensive: check art and relevant fields are defined
           const isPexels = source === "Pexels";
           const imageUrl = isPexels
-            ? art.src && art.src.medium
+            ? art?.src?.medium
               ? art.src.medium
-              : art.src.original
-            : art.webformatURL;
+              : art?.src?.original || ""
+            : art?.webformatURL || "";
           const artLink = isPexels
-            ? art.url
-            : art.pageURL;
+            ? art?.url || "#"
+            : art?.pageURL || "#";
           const author = isPexels
-            ? art.photographer
-            : art.user;
+            ? art?.photographer || ""
+            : art?.user || "";
           const altText = isPexels
-            ? art.alt || "Artwork"
-            : art.tags ? art.tags.split(",")[0] : "Artwork";
-          const artworkId = "" + art.id;
+            ? art?.alt || "Artwork"
+            : (art?.tags && typeof art.tags === "string"
+                ? art.tags.split(",")[0]
+                : "Artwork");
+          const artworkId = art?.id ? "" + art.id : String(idx);
           const isSaved = saved[artworkId];
 
           return (
-            <div className="art-feed-card" key={art.id || art.imageURL || idx}>
+            <div className="art-feed-card" key={art?.id || art?.imageURL || idx}>
               <a
                 href={artLink}
                 target="_blank"
@@ -377,6 +393,8 @@ function ArtFeed() {
                   src={imageUrl}
                   alt={altText}
                   className="art-feed-image"
+                  loading="lazy"
+                  style={{ background: "#f6f2fe" }}
                 />
               </a>
               <div className="art-feed-meta" style={{ justifyContent: "space-between" }}>
