@@ -157,101 +157,9 @@ function ArtFeed() {
     // eslint-disable-next-line
   }, [keyword, style, color, orientation, source]);
 
-  // --- UI: Source Tabs ---
-  function SourceTabs() {
-    return (
-      <div className="art-feed-source-tabs" role="tablist" aria-label="Art Source Selector">
-        <button
-          className={`art-feed-source-tab${source === "Pexels" ? " active" : ""}`}
-          tabIndex={0}
-          role="tab"
-          aria-selected={source === "Pexels"}
-          onClick={() => setSource("Pexels")}
-        >
-          Pexels
-        </button>
-        <button
-          className={`art-feed-source-tab${source === "Pixabay" ? " active" : ""}`}
-          tabIndex={0}
-          role="tab"
-          aria-selected={source === "Pixabay"}
-          onClick={() => setSource("Pixabay")}
-        >
-          Pixabay
-        </button>
-      </div>
-    );
-  }
-
-  // --- UI: Search and filter controls ---
-  function SearchBarAndFilters() {
-    return (
-      <form
-        className="art-feed-controls"
-        onSubmit={e => e.preventDefault()}
-        aria-label="Artwork search/filter controls"
-      >
-        <span style={{ position: "relative", display: "inline-block", flex: "2 1 200px" }}>
-          <span style={{
-            position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)",
-            pointerEvents: "none", color: "#c3abd6", opacity: 0.78
-          }}>
-            {/* Search icon SVG */}
-            <svg height="19" width="19" viewBox="0 0 20 20" aria-hidden="true" style={{ display: "inline-block" }}>
-              <circle cx="8" cy="8" r="6.2" stroke="#bba0d4" strokeWidth="2" fill="none" />
-              <line x1="13.2" y1="13.2" x2="19" y2="19" stroke="#bba0d4" strokeWidth="2" />
-            </svg>
-          </span>
-          <input
-            type="text"
-            value={keyword}
-            autoComplete="off"
-            aria-label="Search artworks"
-            onChange={e => setKeyword(e.target.value)}
-            placeholder='Search by keyword (e.g. "mandala", "cat drawing", "pencil sketch")'
-            className="art-feed-search"
-            style={{ paddingLeft: 37 }}
-          />
-        </span>
-        <select
-          aria-label="Filter by art style"
-          value={style}
-          onChange={e => setStyle(e.target.value)}
-          className="art-feed-select"
-        >
-          {styleOptions.map(opt =>
-            <option value={opt.value} key={opt.value}>
-              {opt.label}
-            </option>
-          )}
-        </select>
-        <select
-          aria-label="Filter by color"
-          value={color}
-          onChange={e => setColor(e.target.value)}
-          className="art-feed-select"
-        >
-          {colorOptions.map(opt =>
-            <option value={opt.value} key={opt.value}>
-              {opt.label}
-            </option>
-          )}
-        </select>
-        <select
-          aria-label="Filter by orientation"
-          value={orientation}
-          onChange={e => setOrientation(e.target.value)}
-          className="art-feed-select"
-        >
-          {orientationOptions.map(opt =>
-            <option value={opt.value} key={opt.value}>
-              {opt.label}
-            </option>
-          )}
-        </select>
-      </form>
-    );
-  }
+  // --- UI controls: search/source/filter above grid as a single block ---
+  // No change needed: source, search, style, color, orientation states are all already local here.
+  // Just make sure source tabs come first and all filter controls are directly below the ArtFeed section title.
 
   // --- Art grid unified rendering for both APIs ---
   function ArtGrid() {
@@ -436,23 +344,97 @@ function ArtFeed() {
     <section className="art-feed-section">
       <h2 className="art-feed-title">Featured Artworks</h2>
 
-      <div
-        className="art-feed-topbar"
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 18,
-          alignItems: "flex-end",
-          justifyContent: "space-between",
-          marginBottom: 16
-        }}
-      >
-        <div style={{ minWidth: 195, flex: "0 1 auto" }}>
-          <SourceTabs />
+      <div className="art-feed-topbar">
+        {/* Source selector tabs and all controls go here as before */}
+        {/* --- Source Tabs --- */}
+        <div style={{ minWidth: 175, flex: "0 1 auto" }}>
+          <div className="art-feed-source-tabs" role="tablist" aria-label="Art Source Selector">
+            <button
+              className={`art-feed-source-tab${source === "Pexels" ? " active" : ""}`}
+              tabIndex={0}
+              role="tab"
+              aria-selected={source === "Pexels"}
+              onClick={() => setSource("Pexels")}
+            >
+              Pexels
+            </button>
+            <button
+              className={`art-feed-source-tab${source === "Pixabay" ? " active" : ""}`}
+              tabIndex={0}
+              role="tab"
+              aria-selected={source === "Pixabay"}
+              onClick={() => setSource("Pixabay")}
+            >
+              Pixabay
+            </button>
+          </div>
         </div>
-        <div style={{ flex: "3 1 340px", width: "100%", maxWidth: 700 }}>
-          <SearchBarAndFilters />
-        </div>
+        {/* --- Search and Filters Form --- */}
+        <form
+          className="art-feed-controls"
+          onSubmit={e => e.preventDefault()}
+          aria-label="Artwork search/filter controls"
+          style={{ flex: "3 1 340px", width: "100%", maxWidth: 700 }}
+        >
+          <span style={{ position: "relative", display: "inline-block", flex: "2 1 200px" }}>
+            <span style={{
+              position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)",
+              pointerEvents: "none", color: "#c3abd6", opacity: 0.78
+            }}>
+              {/* Search icon SVG */}
+              <svg height="19" width="19" viewBox="0 0 20 20" aria-hidden="true" style={{ display: "inline-block" }}>
+                <circle cx="8" cy="8" r="6.2" stroke="#bba0d4" strokeWidth="2" fill="none" />
+                <line x1="13.2" y1="13.2" x2="19" y2="19" stroke="#bba0d4" strokeWidth="2" />
+              </svg>
+            </span>
+            <input
+              type="text"
+              value={keyword}
+              autoComplete="off"
+              aria-label="Search artworks"
+              onChange={e => setKeyword(e.target.value)}
+              placeholder='Search by keyword (e.g. "mandala", "cat drawing", "pencil sketch")'
+              className="art-feed-search"
+              style={{ paddingLeft: 37 }}
+            />
+          </span>
+          <select
+            aria-label="Filter by art style"
+            value={style}
+            onChange={e => setStyle(e.target.value)}
+            className="art-feed-select"
+          >
+            {styleOptions.map(opt =>
+              <option value={opt.value} key={opt.value}>
+                {opt.label}
+              </option>
+            )}
+          </select>
+          <select
+            aria-label="Filter by color"
+            value={color}
+            onChange={e => setColor(e.target.value)}
+            className="art-feed-select"
+          >
+            {colorOptions.map(opt =>
+              <option value={opt.value} key={opt.value}>
+                {opt.label}
+              </option>
+            )}
+          </select>
+          <select
+            aria-label="Filter by orientation"
+            value={orientation}
+            onChange={e => setOrientation(e.target.value)}
+            className="art-feed-select"
+          >
+            {orientationOptions.map(opt =>
+              <option value={opt.value} key={opt.value}>
+                {opt.label}
+              </option>
+            )}
+          </select>
+        </form>
       </div>
       {loading && (
         <div className="art-feed-loading">Loading artworks...</div>
