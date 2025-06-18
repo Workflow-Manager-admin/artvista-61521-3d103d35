@@ -388,10 +388,10 @@ function ArtistBattle({ referencePhoto, battleId: propBattleId }) {
   );
 }
 
-// PUBLIC_INTERFACE
 /**
- * VotingArea component shows both artworks and allows the user to vote once.
- * Realtime updates, disables voting after user's vote submission in this battle.
+ * VotingArea component shows both artworks and allows voting, displaying live counts,
+ * with prevention of double voting (per-user if logged-in, or via localStorage/cookie if anonymous).
+ * Handles both demo/test (not-logged in) and username-auth scenarios.
  */
 function VotingArea({ battle, battleId, user }) {
   const [artworkAUrl, setArtworkAUrl] = useState(null);
@@ -402,6 +402,9 @@ function VotingArea({ battle, battleId, user }) {
   const [userVoteFor, setUserVoteFor] = useState(null);
   const [votesA, setVotesA] = useState(battle.votesA || 0);
   const [votesB, setVotesB] = useState(battle.votesB || 0);
+
+  // Unique per-battle, per-device key for anonymous voting fallback
+  const localVoteKey = `artistbattle__vote__${battleId}`;
 
   // Fetch artworks images once
   useEffect(() => {
@@ -433,63 +436,93 @@ function VotingArea({ battle, battleId, user }) {
     return unsub;
   }, [battleId]);
 
-  // On mount, check if user has already voted in this battle
+  // On mount, check if the user/device has voted (user: Firestore, anon: localStorage)
   useEffect(() => {
+    let aborted = false;
     async function checkVoted() {
-      if (!user || !battleId) return;
-      const q = query(
-        votesCol,
-        where("battleId", "==", battleId),
-        where("voterId", "==", user)
-      );
-      const voteSnap = await getDocs(q);
-      if (!voteSnap.empty) {
-        // Only one vote per user per battle
-        const voteDoc = voteSnap.docs[0];
-        setUserVoteFor(voteDoc.data().votedFor);
+      // Try username context first
+      if (user && battleId) {
+        const q = query(
+          votesCol,
+          where("battleId", "==", battleId),
+          where("voterId", "==", user)
+        );
+        const voteSnap = await getDocs(q);
+        if (!aborted && !voteSnap.empty) {
+          const voteDoc = voteSnap.docs[0];
+          setUserVoteFor(voteDoc.data().votedFor);
+          return;
+        }
+      }
+      // Fallback: check localStorage (per-device voting)
+      try {
+        const local = localStorage.getItem(localVoteKey);
+        if (local) {
+          setUserVoteFor(local);
+        }
+      } catch {
+        // ignore error, treat as no vote
       }
     }
     checkVoted();
+    return () => { aborted = true; };
+    // eslint-disable-next-line
   }, [user, battleId]);
 
   // PUBLIC_INTERFACE
-  /** Handle user voting for one slot ("A" | "B") */
+  /** Handle voting for artwork ("A" | "B") with per-user or per-device restriction */
   async function handleVote(slot) {
     setVoteSubmitting(true);
     setVoteError(null);
     try {
-      if (!user) {
-        setVoteError("You must be logged in to vote.");
-        setVoteSubmitting(false);
-        return;
-      }
-      // Prevent double vote race:
+      // Prevent race: disable if already voted (UI will also gray out buttons)
       if (userVoteFor) {
         setVoteError("You have already voted.");
         setVoteSubmitting(false);
         return;
       }
-
-      // Record in votes collection - only if not voted yet
-      const q = query(
-        votesCol,
-        where("battleId", "==", battleId),
-        where("voterId", "==", user)
-      );
-      const userVoteDocs = await getDocs(q);
-      if (!userVoteDocs.empty) {
-        setUserVoteFor(userVoteDocs.docs[0].data().votedFor);
+      if (!user && !localStorage) {
+        setVoteError("Voting unavailable: please use a modern browser or log in.");
         setVoteSubmitting(false);
         return;
       }
+      // If logged-in, check again (defensive race/parallel tabs)
+      if (user) {
+        const q = query(
+          votesCol,
+          where("battleId", "==", battleId),
+          where("voterId", "==", user)
+        );
+        const userVoteDocs = await getDocs(q);
+        if (!userVoteDocs.empty) {
+          setUserVoteFor(userVoteDocs.docs[0].data().votedFor);
+          setVoteSubmitting(false);
+          return;
+        }
+      }
+      // If anonymous (no user), check localStorage
+      if (!user && localStorage) {
+        const already = localStorage.getItem(localVoteKey);
+        if (already) {
+          setUserVoteFor(already);
+          setVoteError("You have already voted.");
+          setVoteSubmitting(false);
+          return;
+        }
+      }
 
-      // Add vote document
-      await addDoc(votesCol, {
-        battleId,
-        voterId: user,
-        votedFor: slot,
-        votedAt: serverTimestamp(),
-      });
+      // Add vote to Firestore if logged-in, else just set localStorage and update tally in Firestore
+      if (user) {
+        await addDoc(votesCol, {
+          battleId,
+          voterId: user,
+          votedFor: slot,
+          votedAt: serverTimestamp(),
+        });
+      } else {
+        // Assign per-device per-battle vote tracking only
+        try { localStorage.setItem(localVoteKey, slot); } catch {/* ignore */}
+      }
 
       // Update battle tally atomically
       const battleDocRef = doc(db, "battles", battleId);
@@ -506,9 +539,7 @@ function VotingArea({ battle, battleId, user }) {
     setVoteSubmitting(false);
   }
 
-  // Determine disabled state if user is an artist (optional, allow spectator voting)
-  // Optionally, could disable voting for artistA on own artwork (currently: can vote for anyone)
-
+  // Voting UI as before with live updating counts and stateful disabled
   return (
     <section
       className="artist-battle-voting"
