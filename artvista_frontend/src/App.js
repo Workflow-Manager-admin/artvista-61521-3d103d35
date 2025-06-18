@@ -93,6 +93,7 @@ function AuthGateApp() {
           {activePage === "explore" && (
             <>
               <ArtOfTheDay />
+              {/* Render ArtFeed with all its internal state/handlers restored (no props) */}
               <ArtFeed />
             </>
           )}

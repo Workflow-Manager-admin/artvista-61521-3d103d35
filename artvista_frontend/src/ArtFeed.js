@@ -158,8 +158,7 @@ function ArtFeed() {
   }, [keyword, style, color, orientation, source]);
 
   // --- UI controls: search/source/filter above grid as a single block ---
-  // No change needed: source, search, style, color, orientation states are all already local here.
-  // Just make sure source tabs come first and all filter controls are directly below the ArtFeed section title.
+  // Controls are rendered locally at the top below section header.
 
   // --- Art grid unified rendering for both APIs ---
   function ArtGrid() {

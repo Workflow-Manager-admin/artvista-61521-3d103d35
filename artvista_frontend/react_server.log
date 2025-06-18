@@ -22,18 +22,24 @@ modules by path ./.ve/ 15.1 KiB
     ./.ve/EditorOverlay.css 2.25 KiB [built] [code generated]
     ./node_modules/css-loader/dist/cjs.js!./.ve/EditorOverlay.css 697 bytes [built] [code generated]
   ./.ve/EditorOverlay.jsx 1.58 KiB [built] [code generated]
-webpack 5.99.9 compiled successfully in 1373 ms
+webpack 5.99.9 compiled successfully in 1579 ms
 assets by status 1.98 KiB [cached] 1 asset
-assets by path *.js 1.45 MiB
+assets by path *.js 1.46 MiB
   asset bundle.js 1.45 MiB [emitted] (name: main)
-  asset main.a14fbcfffc4d53975470.hot-update.js 854 bytes [emitted] [immutable] [hmr] (name: main)
+  asset main.a14fbcfffc4d53975470.hot-update.js 10.9 KiB [emitted] [immutable] [hmr] (name: main)
 asset main.a14fbcfffc4d53975470.hot-update.json 28 bytes [emitted] [immutable] [hmr]
-Entrypoint main 1.45 MiB = bundle.js 1.45 MiB main.a14fbcfffc4d53975470.hot-update.js 854 bytes
+Entrypoint main 1.46 MiB = bundle.js 1.45 MiB main.a14fbcfffc4d53975470.hot-update.js 10.9 KiB
 cached modules 1.31 MiB [cached] 46 modules
 runtime modules 27.5 KiB 14 modules
-./src/App.js 6.48 KiB [built]
-webpack 5.99.9 compiled successfully in 59 ms
-assets by status 1.46 MiB [cached] 2 assets
-cached modules 1.29 MiB (javascript) 27.5 KiB (runtime) [cached] 60 modules
-./src/ArtFeed.js 19.5 KiB [built]
-webpack 5.99.9 compiled successfully in 159 ms
+./src/App.js 6.48 KiB [built] [code generated]
+webpack 5.99.9 compiled successfully in 75 ms
+assets by status 1.98 KiB [cached] 1 asset
+assets by path *.js 1.48 MiB
+  asset bundle.js 1.45 MiB [emitted] (name: main)
+  asset main.2fd370e7ca6e850acf30.hot-update.js 24.7 KiB [emitted] [immutable] [hmr] (name: main)
+asset main.2fd370e7ca6e850acf30.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 1.48 MiB = bundle.js 1.45 MiB main.2fd370e7ca6e850acf30.hot-update.js 24.7 KiB
+cached modules 1.29 MiB [cached] 46 modules
+runtime modules 27.5 KiB 14 modules
+./src/ArtFeed.js 19.4 KiB [built] [code generated]
+webpack 5.99.9 compiled successfully in 141 ms
