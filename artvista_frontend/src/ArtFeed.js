@@ -1,16 +1,24 @@
 import React, { useEffect, useState } from "react";
+import { useAuth } from "./AuthContext";
+import { firestore } from "./firebase";
+import { collection, addDoc, deleteDoc, query, where, onSnapshot } from "firebase/firestore";
+
+import { doc } from "firebase/firestore";
 
 // PUBLIC_INTERFACE
 /**
  * ArtFeed displays a responsive image grid with artworks from Pexels and Pixabay APIs.
  * Applies ArtVista's color theme for cohesive look.
  * Allows user to switch art source with tabs.
+ * Allows saving/unsaving artworks tied to user account.
  */
 function ArtFeed() {
   const [artworks, setArtworks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState(null);
   const [source, setSource] = useState("Pexels"); // ["Pexels"|"Pixabay"]
+  const { user } = useAuth();
+  const [saved, setSaved] = useState({}); // id -> {docId, ...artwork}
 
   // Query and API keys
   const QUERY = "art OR painting OR abstract OR gallery";
@@ -64,6 +72,26 @@ function ArtFeed() {
     }
   }, [source]); // re-run on source switch
 
+  // Sync user's saved artworks
+  useEffect(() => {
+    if (!user) {
+      setSaved({});
+      return;
+    }
+    const q = query(
+      collection(firestore, "collections"),
+      where("uid", "==", user.uid)
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      const list = {};
+      snap.docs.forEach((d) => {
+        if (d.data().artworkId) list[d.data().artworkId] = { ...d.data(), docId: d.id };
+      });
+      setSaved(list);
+    });
+    return () => unsub();
+  }, [user]);
+
   // UI for switching sources
   function SourceTabs() {
     return (
@@ -109,6 +137,38 @@ function ArtFeed() {
   // Art grid unified rendering for both APIs
   function ArtGrid() {
     // Helper for Pexels or Pixabay fields
+
+    // Save/unsave artwork for user collection
+    async function handleSave(art, isPexels) {
+      if (!user) {
+        alert("Login to save artworks");
+        return;
+      }
+      // Use art.id as artworkId. Save minimal fields
+      await addDoc(collection(firestore, "collections"), {
+        artworkId: "" + art.id,
+        uid: user.uid,
+        imageUrl: isPexels
+          ? art.src && art.src.medium
+            ? art.src.medium
+            : art.src.original
+          : art.webformatURL,
+        link: isPexels ? art.url : art.pageURL,
+        author: isPexels ? art.photographer : art.user,
+        title: isPexels ? art.alt : (art.tags ? art.tags.split(",")[0] : "Artwork"),
+        ts: Date.now()
+      });
+    }
+
+    async function handleUnsave(artworkId) {
+      if (!user || !saved[artworkId]) return;
+      try {
+        await deleteDoc(doc(firestore, "collections", saved[artworkId].docId));
+      } catch (e) {
+        alert("Failed to unsave artwork");
+      }
+    }
+
     return (
       <div className="art-feed-grid">
         {artworks.length === 0 && (
@@ -131,6 +191,9 @@ function ArtFeed() {
           const altText = isPexels
             ? art.alt || "Artwork"
             : art.tags ? art.tags.split(",")[0] : "Artwork";
+          const artworkId = "" + art.id;
+          const isSaved = !!user && !!saved[artworkId];
+
           return (
             <div className="art-feed-card" key={art.id || art.imageURL || idx}>
               <a
@@ -145,10 +208,41 @@ function ArtFeed() {
                   className="art-feed-image"
                 />
               </a>
-              <div className="art-feed-meta">
+              <div className="art-feed-meta" style={{ justifyContent: "space-between" }}>
                 <span className="art-feed-author">
                   {author ? `By ${author}` : ""}
                 </span>
+                {user && (
+                  isSaved ? (
+                    <button
+                      className="btn"
+                      type="button"
+                      style={{
+                        background: "#fff0f4",
+                        color: "#6A0DAD",
+                        fontWeight: 600,
+                        fontSize: "0.97em"
+                      }}
+                      onClick={() => handleUnsave(artworkId)}
+                    >
+                      Unsave
+                    </button>
+                  ) : (
+                    <button
+                      className="btn"
+                      type="button"
+                      style={{
+                        background: "#d4bee8",
+                        color: "#6A0DAD",
+                        fontWeight: 600,
+                        fontSize: "0.97em"
+                      }}
+                      onClick={() => handleSave(art, isPexels)}
+                    >
+                      Save
+                    </button>
+                  )
+                )}
               </div>
             </div>
           );
