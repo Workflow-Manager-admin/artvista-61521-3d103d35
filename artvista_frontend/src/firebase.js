@@ -7,8 +7,14 @@ import { getFirestore } from "firebase/firestore";
  * Firebase configuration and core exports for ArtVista.
  * Replace the below config with project-specific keys if needed.
  */
+/*
+ * To enable Firebase Authentication and Firestore for user-specific art collections:
+ * 1. Go to https://console.firebase.google.com/ and create a project, enable Authentication (Email/Password and Google) and Firestore.
+ * 2. Replace the fields below with your Firebase project’s web config. 
+ *    Do NOT leave as default! This placeholder will block login/signup.
+ */
 const firebaseConfig = {
-  apiKey: "AIzaSyD-example-key-should-be-replaced",
+  apiKey: "AIzaSyD-example-key-should-be-replaced",  // TODO: Replace with your project's config
   authDomain: "artvista-login.firebaseapp.com",
   projectId: "artvista-login",
   storageBucket: "artvista-login.appspot.com",
