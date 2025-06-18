@@ -7,17 +7,24 @@ function Sidebar() {
    * Sidebar component fetches and displays art-related news.
    * News are fetched from newsdata.io public API and shown as a list of cards
    * Each card: title, snippet/description, and a link to the article.
+   * Fetch logic is robust and includes detailed logging and error handling.
    */
+
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState(null);
+  const [errorDetails, setErrorDetails] = useState(null); // For troubleshooting details
 
   useEffect(() => {
     /**
      * Fetch the latest art-related news from newsdata.io.
-     * - Correct API use: GET https://newsdata.io/api/1/news
+     * - Endpoint: https://newsdata.io/api/1/news
      * - Required params: apikey, q (search), category, language
-     * - Handles error states: HTTP/network errors, invalid data, no results.
+     * - Handles error states, CORS, and network issues.
+     * - Console logs details useful for debugging.
+     *
+     * NOTE: If you see a CORS error, newsdata.io may not allow raw browser requests for your API key (you may need a proxy server).
+     * See: https://newsdata.io/docs for restrictions.
      */
     const apiKey = 'pub_7009dcb5bea84ab48ddd0213f4cadc9f';
     const query = 'art OR artwork OR gallery OR artist OR painting OR museum';
@@ -27,39 +34,98 @@ function Sidebar() {
 
     setLoading(true);
     setApiError(null);
+    setErrorDetails(null);
 
     fetch(url)
-      .then(res => {
+      .then(async res => {
         if (!res.ok) {
-          throw new Error(`Network response was not ok (status ${res.status})`);
+          // Special CORS error codes do not always produce a res here!
+          let text = await res.text().catch(() => '');
+          let errorMsg = `Network response was not ok (status ${res.status}). Response text: ${text}`;
+          // Log full error for developer
+          // eslint-disable-next-line no-console
+          console.error('[Sidebar] News fetch error:', errorMsg);
+          setErrorDetails(errorMsg);
+          throw new Error(errorMsg);
         }
         return res.json();
       })
       .then(data => {
-        if (data && Array.isArray(data.results) && data.results.length > 0) {
+        // newsdata.io metadata: {status: "success"|"error"}; results: [articles]
+        if (
+          data &&
+          (data.status === "success" || data.status === undefined) &&
+          Array.isArray(data.results) &&
+          data.results.length > 0
+        ) {
           setNews(data.results.slice(0, 7));
+          setErrorDetails(null);
         } else {
           setNews([]);
+          let errorMsg;
           if (data && data.status === "error" && data.message) {
-            setApiError(`Failed to load news: ${data.message}`);
+            errorMsg = `Failed to load news: ${data.message}`;
+          } else if (typeof data === 'string' && data.includes("CORS")) {
+            // Custom catch for CORS error in string response
+            errorMsg = 'CORS error: newsdata.io rejected this request from frontend (browser). You may need a server proxy.';
           } else {
-            setApiError('No news articles found.');
+            errorMsg = 'No news articles found.';
           }
+          setApiError(errorMsg);
+          setErrorDetails(
+            `[Sidebar] API error. Raw response: ${JSON.stringify(data)}`
+          );
+          // eslint-disable-next-line no-console
+          console.error('[Sidebar] News fetch returned error state. Data:', data);
         }
         setLoading(false);
       })
       .catch(err => {
+        // developer-mode log always for fetch errors
+        // eslint-disable-next-line no-console
+        console.error('[Sidebar] General News Fetch Error:', err);
         setApiError('Failed to load news.');
+        setErrorDetails(
+          `[Sidebar] Fetch failed: ${err.message}.\n` +
+          'If this was a CORS error, check newsdata.io API browser access policy. ' +
+          'Try a serverless proxy if needed.'
+        );
         setNews([]);
         setLoading(false);
       });
   }, []);
 
+  // Render error details for troubleshooting (dev mode UX)
+  function ErrorDetails() {
+    if (!errorDetails) return null;
+    return (
+      <pre
+        style={{
+          color: '#ff6d6d',
+          background: 'rgba(30,5,5,0.13)',
+          fontSize: '0.81rem',
+          margin: '8px 0 0 0',
+          padding: '7px 12px',
+          borderRadius: '4px',
+          overflowX: 'auto'
+        }}
+        aria-label="Fetch error details"
+      >
+        {errorDetails}
+      </pre>
+    );
+  }
+
   return (
     <aside className="sidebar-art-news" aria-label="Art News Sidebar">
       <h2 className="sidebar-title">Art News</h2>
       {loading && <div className="sidebar-loading">Loading...</div>}
-      {apiError && <div className="sidebar-error">{apiError}</div>}
+      {apiError && (
+        <div className="sidebar-error">
+          {apiError}
+          <ErrorDetails />
+        </div>
+      )}
       {!loading && !apiError && (
         <ul className="sidebar-news-list">
           {news.length === 0 && (
