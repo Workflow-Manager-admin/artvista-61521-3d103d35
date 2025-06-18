@@ -444,14 +444,28 @@ function ArtFeed() {
                 <span className="art-feed-author">
                   {author ? `By ${author}` : ""}
                 </span>
+                {/* Save/Unsave Button with Icon */}
                 <button
-                  className="btn"
                   type="button"
+                  tabIndex={0}
+                  className="btn"
+                  aria-label={
+                    isSaved
+                      ? (user ? "Remove from your collection" : "Remove from saved")
+                      : "Save to your collection"
+                  }
                   style={{
-                    background: isSaved ? "#fff0f4" : "#d4bee8",
-                    color: "#6A0DAD",
-                    fontWeight: 600,
-                    fontSize: "0.97em"
+                    background: "none",
+                    border: "none",
+                    padding: "4px 8px",
+                    margin: 0,
+                    color: isSaved ? "#ff89b6" : "#6A0DAD",
+                    fontWeight: 700,
+                    fontSize: "1.25em",
+                    boxShadow: "none",
+                    display: "flex",
+                    alignItems: "center",
+                    cursor: "pointer"
                   }}
                   onClick={() =>
                     isSaved
@@ -459,7 +473,33 @@ function ArtFeed() {
                       : handleSave(art, isPexels)
                   }
                 >
-                  {isSaved ? (user ? "Unsave" : "Remove") : "Save"}
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 3
+                    }}
+                  >
+                    {isSaved ? (
+                      // Filled heart SVG
+                      <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true" fill="#ff89b6">
+                        <path d="M11 19s-6.22-3.61-8.25-7.31C1.1 9.82 1.08 7.63 2.62 6.13 4.1 4.7 6.7 4.65 8.26 6.09L11 8.66l2.74-2.57c1.56-1.44 4.16-1.39 5.64.04 1.53 1.5 1.51 3.69-.13 5.57C17.22 15.39 11 19 11 19z"/>
+                      </svg>
+                    ) : (
+                      // Outlined heart SVG
+                      <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true" fill="none" stroke="#6A0DAD" strokeWidth="2">
+                        <path d="M11 19s-6.22-3.61-8.25-7.31C1.1 9.82 1.08 7.63 2.62 6.13 4.1 4.7 6.7 4.65 8.26 6.09L11 8.66l2.74-2.57c1.56-1.44 4.16-1.39 5.64.04 1.53 1.5 1.51 3.69-.13 5.57C17.22 15.39 11 19 11 19z"/>
+                      </svg>
+                    )}
+                    <span style={{
+                      fontSize: "1em",
+                      color: isSaved ? "#ff89b6" : "#6A0DAD",
+                      marginLeft: 4,
+                      fontWeight: 600
+                    }}>
+                      {isSaved ? (user ? "Saved" : "Saved") : "Save"}
+                    </span>
+                  </span>
                 </button>
               </div>
             </div>
