@@ -7,13 +7,13 @@
 <i> [webpack-dev-server] On Your Network (IPv4): http://172.17.0.2:3000/
 <i> [webpack-dev-server] Content not from webpack is served from './public' directory
 Injecting EditorRootWrapper import: ../.ve/EditorRootWrapper
-asset bundle.js 1.42 MiB [emitted] (name: main)
+asset bundle.js 1.43 MiB [emitted] (name: main)
 asset index.html 1.98 KiB [emitted]
 runtime modules 27.5 KiB 14 modules
 modules by path ./node_modules/ 1.24 MiB 31 modules
-modules by path ./src/ 32.1 KiB
+modules by path ./src/ 33.4 KiB
   modules by path ./src/*.css 13.6 KiB 6 modules
-  modules by path ./src/*.js 18.4 KiB
+  modules by path ./src/*.js 19.7 KiB
     ./src/index.js 530 bytes [built] [code generated]
     + 3 modules
 modules by path ./.ve/ 15.1 KiB
@@ -22,14 +22,14 @@ modules by path ./.ve/ 15.1 KiB
     ./.ve/EditorOverlay.css 2.25 KiB [built] [code generated]
     ./node_modules/css-loader/dist/cjs.js!./.ve/EditorOverlay.css 697 bytes [built] [code generated]
   ./.ve/EditorOverlay.jsx 1.58 KiB [built] [code generated]
-webpack 5.99.9 compiled successfully in 1502 ms
+webpack 5.99.9 compiled successfully in 1589 ms
 assets by status 1.98 KiB [cached] 1 asset
-assets by path *.js 1.44 MiB
-  asset bundle.js 1.43 MiB [emitted] (name: main)
-  asset main.d186ee63c22d274d0ad8.hot-update.js 14.2 KiB [emitted] [immutable] [hmr] (name: main)
-asset main.d186ee63c22d274d0ad8.hot-update.json 28 bytes [emitted] [immutable] [hmr]
-Entrypoint main 1.44 MiB = bundle.js 1.43 MiB main.d186ee63c22d274d0ad8.hot-update.js 14.2 KiB
-cached modules 1.28 MiB [cached] 45 modules
+assets by path *.js 1.41 MiB
+  asset bundle.js 1.4 MiB [emitted] (name: main)
+  asset main.d62d5b1ea12917bce9a9.hot-update.js 4.51 KiB [emitted] [immutable] [hmr] (name: main)
+asset main.d62d5b1ea12917bce9a9.hot-update.json 124 bytes [emitted] [immutable] [hmr]
+Entrypoint main 1.41 MiB = bundle.js 1.4 MiB main.d62d5b1ea12917bce9a9.hot-update.js 4.51 KiB
+cached modules 1.27 MiB [cached] 42 modules
 runtime modules 27.5 KiB 14 modules
-./src/Sidebar.js 10.7 KiB [built] [code generated]
-webpack 5.99.9 compiled successfully in 155 ms
+./src/App.js 1.96 KiB [built] [code generated]
+webpack 5.99.9 compiled successfully in 139 ms

@@ -1,12 +1,11 @@
 import React from 'react';
 import './App.css';
-import Sidebar from './Sidebar';
 import ArtFeed from './ArtFeed';
 
 function App() {
   // PUBLIC_INTERFACE
   /**
-   * Main application container with art feed and news sidebar.
+   * Main application container focusing on the art feed (no news sidebar).
    */
   return (
     <div className="app">
@@ -22,19 +21,11 @@ function App() {
         </div>
       </nav>
 
-      <div style={{
-        display: 'flex',
-        flexDirection: 'row',
-        minHeight: '100vh',
-        marginTop: '64px'
-      }}>
-        <main style={{ flex: 1 }}>
-          <div className="container">
-            <ArtFeed />
-          </div>
-        </main>
-        <Sidebar />
-      </div>
+      <main style={{ flex: 1, marginTop: '64px', minHeight: '100vh' }}>
+        <div className="container">
+          <ArtFeed />
+        </div>
+      </main>
     </div>
   );
 }
