@@ -5,6 +5,7 @@ import ArtOfTheDay from './ArtOfTheDay';
 import AuthUI from './AuthUI';
 import { AuthProvider, useAuth } from './AuthContext';
 import MyCollection from './MyCollection';
+import DrawThisPhotoChallenge from "./DrawThisPhotoChallenge";
 
 /**
  * Enforces authentication before allowing access to ArtVista main interface.
@@ -93,6 +94,8 @@ function AuthGateApp() {
           {activePage === "explore" && (
             <>
               <ArtOfTheDay />
+              {/* Draw This Photo Challenge inserted here */}
+              <DrawThisPhotoChallenge />
               {/* Render ArtFeed with all its internal state/handlers restored (no props) */}
               <ArtFeed />
             </>

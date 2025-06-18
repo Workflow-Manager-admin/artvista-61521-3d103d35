@@ -22,18 +22,27 @@ modules by path ./.ve/ 15.1 KiB
     ./.ve/EditorOverlay.css 2.25 KiB [built] [code generated]
     ./node_modules/css-loader/dist/cjs.js!./.ve/EditorOverlay.css 697 bytes [built] [code generated]
   ./.ve/EditorOverlay.jsx 1.58 KiB [built] [code generated]
-webpack 5.99.9 compiled successfully in 1419 ms
+webpack 5.99.9 compiled successfully in 1338 ms
 assets by status 1.98 KiB [cached] 1 asset
-assets by path *.js 1.45 MiB
+assets by path *.js 1.46 MiB
   asset bundle.js 1.45 MiB [emitted] (name: main)
-  asset main.a0d16b3fd05c90c821b3.hot-update.js 854 bytes [emitted] [immutable] [hmr] (name: main)
+  asset main.a0d16b3fd05c90c821b3.hot-update.js 11.1 KiB [emitted] [immutable] [hmr] (name: main)
 asset main.a0d16b3fd05c90c821b3.hot-update.json 28 bytes [emitted] [immutable] [hmr]
-Entrypoint main 1.45 MiB = bundle.js 1.45 MiB main.a0d16b3fd05c90c821b3.hot-update.js 854 bytes
+Entrypoint main 1.46 MiB = bundle.js 1.45 MiB main.a0d16b3fd05c90c821b3.hot-update.js 11.1 KiB
 cached modules 1.31 MiB [cached] 46 modules
 runtime modules 27.5 KiB 14 modules
-./src/App.js 6.48 KiB [built]
-webpack 5.99.9 compiled successfully in 58 ms
-assets by status 1.46 MiB [cached] 2 assets
-cached modules 1.29 MiB (javascript) 27.5 KiB (runtime) [cached] 60 modules
-./src/ArtFeed.js 19.4 KiB [built]
-webpack 5.99.9 compiled successfully in 145 ms
+./src/App.js 6.58 KiB [built] [code generated]
+webpack 5.99.9 compiled successfully in 151 ms
+<i> [webpack-dev-middleware] wait until bundle finished: /main.a0d16b3fd05c90c821b3.hot-update.json
+assets by status 1.98 KiB [cached] 1 asset
+assets by path *.js 1.51 MiB
+  asset bundle.js 1.48 MiB [emitted] (name: main)
+  asset main.186161e7ce9389b297f8.hot-update.js 33.6 KiB [emitted] [immutable] [hmr] (name: main)
+asset main.186161e7ce9389b297f8.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 1.51 MiB = bundle.js 1.48 MiB main.186161e7ce9389b297f8.hot-update.js 33.6 KiB
+cached modules 1.31 MiB [cached] 46 modules
+runtime modules 27.5 KiB 14 modules
+javascript modules 24.9 KiB
+  ./src/App.js 6.64 KiB [built] [code generated]
+  ./src/DrawThisPhotoChallenge.js 18.3 KiB [built] [code generated]
+webpack 5.99.9 compiled successfully in 135 ms
