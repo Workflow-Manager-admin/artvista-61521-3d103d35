@@ -8,11 +8,11 @@ import { useAuth } from "./AuthContext";
  * Live keyword search & filter UI for style, color, orientation; fetches update as user types or changes filters.
  * Allows user to switch art source with tabs, and saving/unsaving artworks tied to user account (or localStorage by username).
  */
-function ArtFeed({ hideTopbar = false, keyword: keywordProp, setKeyword: setKeywordProp, style: styleProp, setStyle: setStyleProp, color: colorProp, setColor: setColorProp, orientation: orientationProp, setOrientation: setOrientationProp, source: sourceProp, setSource: setSourceProp }) {
+function ArtFeed() {
   const [artworks, setArtworks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState(null);
-  const [source, setSource] = useState(sourceProp || "Pexels"); // ["Pexels"|"Pixabay"]
+  const [source, setSource] = useState("Pexels"); // ["Pexels"|"Pixabay"]
   const { user } = useAuth();
   const [saved, setSaved] = useState({}); // Format: { [artworkId]: { ...meta, isLocal: true } }
 
@@ -40,31 +40,11 @@ function ArtFeed({ hideTopbar = false, keyword: keywordProp, setKeyword: setKeyw
   }, [user]);
 
   // --- SEARCH/FILTER STATE ---
-  const [keyword, setKeyword] = useState(keywordProp || "");
-  const [style, setStyle] = useState(styleProp || "");
-  const [color, setColor] = useState(colorProp || "");
-  const [orientation, setOrientation] = useState(orientationProp || "");
+  const [keyword, setKeyword] = useState("");
+  const [style, setStyle] = useState("");
+  const [color, setColor] = useState("");
+  const [orientation, setOrientation] = useState("");
   const debounceTimer = useRef(null);
-
-  // Use controlled props if provided
-  const controlled = {
-    keyword: typeof keywordProp === "string" && setKeywordProp,
-    style: typeof styleProp === "string" && setStyleProp,
-    color: typeof colorProp === "string" && setColorProp,
-    orientation: typeof orientationProp === "string" && setOrientationProp,
-    source: typeof sourceProp === "string" && setSourceProp
-  };
-
-  const keywordValue = controlled.keyword ? keywordProp : keyword;
-  const setKeywordValue = controlled.keyword ? setKeywordProp : setKeyword;
-  const styleValue = controlled.style ? styleProp : style;
-  const setStyleValue = controlled.style ? setStyleProp : setStyle;
-  const colorValue = controlled.color ? colorProp : color;
-  const setColorValue = controlled.color ? setColorProp : setColor;
-  const orientationValue = controlled.orientation ? orientationProp : orientation;
-  const setOrientationValue = controlled.orientation ? setOrientationProp : setOrientation;
-  const sourceValue = controlled.source ? sourceProp : source;
-  const setSourceValue = controlled.source ? setSourceProp : setSource;
 
   // --- Filter options ---
   const styleOptions = [
@@ -116,18 +96,18 @@ function ArtFeed({ hideTopbar = false, keyword: keywordProp, setKeyword: setKeyw
       setLoading(true);
       setApiError(null);
 
-      let userQuery = keywordValue && keywordValue.trim().length > 0 ? keywordValue.trim() : "art OR painting OR abstract OR gallery";
+      let userQuery = keyword && keyword.trim().length > 0 ? keyword.trim() : "art OR painting OR abstract OR gallery";
       // If style picked, append to query
       let q = userQuery;
-      if (styleValue) {
-        q += " " + styleValue;
+      if (style) {
+        q += " " + style;
       }
 
-      if (sourceValue === "Pexels") {
+      if (source === "Pexels") {
         // Compose params: keyword, color, orientation => https://www.pexels.com/api/documentation/#photos-search
         let url = `${PEXELS_ENDPOINT}?query=${encodeURIComponent(q)}&per_page=18`;
-        if (colorValue) url += `&color=${encodeURIComponent(colorValue)}`;
-        if (orientationValue) url += `&orientation=${encodeURIComponent(orientationValue)}`;
+        if (color) url += `&color=${encodeURIComponent(color)}`;
+        if (orientation) url += `&orientation=${encodeURIComponent(orientation)}`;
         fetch(url, {
           headers: { Authorization: PEXELS_API_KEY },
         })
@@ -143,17 +123,17 @@ function ArtFeed({ hideTopbar = false, keyword: keywordProp, setKeyword: setKeyw
             setApiError("Failed to load artworks from Pexels.");
             setLoading(false);
           });
-      } else if (sourceValue === "Pixabay") {
+      } else if (source === "Pixabay") {
         // Compose params: keyword, color, orientation => https://pixabay.com/api/docs/
         // Pixabay orientation: "all", "horizontal", "vertical", or "square"
         let orientationPixabay = "";
-        if (orientationValue === "landscape") orientationPixabay = "horizontal";
-        else if (orientationValue === "portrait") orientationPixabay = "vertical";
-        else if (orientationValue === "square") orientationPixabay = "square";
+        if (orientation === "landscape") orientationPixabay = "horizontal";
+        else if (orientation === "portrait") orientationPixabay = "vertical";
+        else if (orientation === "square") orientationPixabay = "square";
 
         let url =
           `${PIXABAY_ENDPOINT}?key=${PIXABAY_API_KEY}&q=${encodeURIComponent(q)}&image_type=photo&per_page=18&safesearch=true`;
-        if (colorValue) url += `&colors=${encodeURIComponent(colorValue)}`;
+        if (color) url += `&colors=${encodeURIComponent(color)}`;
         if (orientationPixabay) url += `&orientation=${orientationPixabay}`;
         fetch(url)
           .then((res) => {
@@ -175,37 +155,35 @@ function ArtFeed({ hideTopbar = false, keyword: keywordProp, setKeyword: setKeyw
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
     };
     // eslint-disable-next-line
-  }, [keywordValue, styleValue, colorValue, orientationValue, sourceValue]);
+  }, [keyword, style, color, orientation, source]);
 
   // --- UI: Source Tabs ---
   function SourceTabs() {
     return (
       <div className="art-feed-source-tabs" role="tablist" aria-label="Art Source Selector">
         <button
-          className={`art-feed-source-tab${sourceValue === "Pexels" ? " active" : ""}`}
+          className={`art-feed-source-tab${source === "Pexels" ? " active" : ""}`}
           tabIndex={0}
           role="tab"
-          aria-selected={sourceValue === "Pexels"}
-          onClick={() => setSourceValue("Pexels")}
+          aria-selected={source === "Pexels"}
+          onClick={() => setSource("Pexels")}
         >
           Pexels
         </button>
         <button
-          className={`art-feed-source-tab${sourceValue === "Pixabay" ? " active" : ""}`}
+          className={`art-feed-source-tab${source === "Pixabay" ? " active" : ""}`}
           tabIndex={0}
           role="tab"
-          aria-selected={sourceValue === "Pixabay"}
-          onClick={() => setSourceValue("Pixabay")}
+          aria-selected={source === "Pixabay"}
+          onClick={() => setSource("Pixabay")}
         >
           Pixabay
         </button>
       </div>
     );
   }
-  // Exportable for top-level use
-  ArtFeed.TopSourceTabs = SourceTabs;
 
-  // --- UI: Search and filter controls, now with improved styles ---
+  // --- UI: Search and filter controls ---
   function SearchBarAndFilters() {
     return (
       <form
@@ -226,10 +204,10 @@ function ArtFeed({ hideTopbar = false, keyword: keywordProp, setKeyword: setKeyw
           </span>
           <input
             type="text"
-            value={keywordValue}
+            value={keyword}
             autoComplete="off"
             aria-label="Search artworks"
-            onChange={e => setKeywordValue(e.target.value)}
+            onChange={e => setKeyword(e.target.value)}
             placeholder='Search by keyword (e.g. "mandala", "cat drawing", "pencil sketch")'
             className="art-feed-search"
             style={{ paddingLeft: 37 }}
@@ -237,8 +215,8 @@ function ArtFeed({ hideTopbar = false, keyword: keywordProp, setKeyword: setKeyw
         </span>
         <select
           aria-label="Filter by art style"
-          value={styleValue}
-          onChange={e => setStyleValue(e.target.value)}
+          value={style}
+          onChange={e => setStyle(e.target.value)}
           className="art-feed-select"
         >
           {styleOptions.map(opt =>
@@ -249,8 +227,8 @@ function ArtFeed({ hideTopbar = false, keyword: keywordProp, setKeyword: setKeyw
         </select>
         <select
           aria-label="Filter by color"
-          value={colorValue}
-          onChange={e => setColorValue(e.target.value)}
+          value={color}
+          onChange={e => setColor(e.target.value)}
           className="art-feed-select"
         >
           {colorOptions.map(opt =>
@@ -261,8 +239,8 @@ function ArtFeed({ hideTopbar = false, keyword: keywordProp, setKeyword: setKeyw
         </select>
         <select
           aria-label="Filter by orientation"
-          value={orientationValue}
-          onChange={e => setOrientationValue(e.target.value)}
+          value={orientation}
+          onChange={e => setOrientation(e.target.value)}
           className="art-feed-select"
         >
           {orientationOptions.map(opt =>
@@ -274,8 +252,6 @@ function ArtFeed({ hideTopbar = false, keyword: keywordProp, setKeyword: setKeyw
       </form>
     );
   }
-  // Exportable for top-level use
-  ArtFeed.TopSearchBarAndFilters = SearchBarAndFilters;
 
   // --- Art grid unified rendering for both APIs ---
   function ArtGrid() {
@@ -460,26 +436,24 @@ function ArtFeed({ hideTopbar = false, keyword: keywordProp, setKeyword: setKeyw
     <section className="art-feed-section">
       <h2 className="art-feed-title">Featured Artworks</h2>
 
-      {!hideTopbar && (
-        <div
-          className="art-feed-topbar"
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 18,
-            alignItems: "flex-end",
-            justifyContent: "space-between",
-            marginBottom: 16
-          }}
-        >
-          <div style={{ minWidth: 195, flex: "0 1 auto" }}>
-            <SourceTabs />
-          </div>
-          <div style={{ flex: "3 1 340px", width: "100%", maxWidth: 700 }}>
-            <SearchBarAndFilters />
-          </div>
+      <div
+        className="art-feed-topbar"
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 18,
+          alignItems: "flex-end",
+          justifyContent: "space-between",
+          marginBottom: 16
+        }}
+      >
+        <div style={{ minWidth: 195, flex: "0 1 auto" }}>
+          <SourceTabs />
         </div>
-      )}
+        <div style={{ flex: "3 1 340px", width: "100%", maxWidth: 700 }}>
+          <SearchBarAndFilters />
+        </div>
+      </div>
       {loading && (
         <div className="art-feed-loading">Loading artworks...</div>
       )}

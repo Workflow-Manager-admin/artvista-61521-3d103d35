@@ -92,32 +92,8 @@ function AuthGateApp() {
         <div className="container">
           {activePage === "explore" && (
             <>
-              {/* Search Bar and Sort Controls moved above Art of the Day */}
-              <div style={{
-                marginTop: "2.3rem",
-                marginBottom: "0.5rem"
-              }}>
-                <div
-                  className="art-feed-topbar"
-                  style={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: 18,
-                    alignItems: "flex-end",
-                    justifyContent: "space-between",
-                    marginBottom: 16
-                  }}
-                >
-                  <div style={{ minWidth: 195, flex: "0 1 auto" }}>
-                    <ArtFeed.TopSourceTabs />
-                  </div>
-                  <div style={{ flex: "3 1 340px", width: "100%", maxWidth: 700 }}>
-                    <ArtFeed.TopSearchBarAndFilters />
-                  </div>
-                </div>
-              </div>
               <ArtOfTheDay />
-              <ArtFeed hideTopbar />
+              <ArtFeed />
             </>
           )}
           {activePage === "mycollection" && <MyCollection />}
