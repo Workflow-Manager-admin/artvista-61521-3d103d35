@@ -160,38 +160,22 @@ function ArtFeed() {
   // --- UI: Source Tabs ---
   function SourceTabs() {
     return (
-      <div style={{ display: "flex", gap: 10, marginBottom: "0.6rem" }}>
+      <div className="art-feed-source-tabs" role="tablist" aria-label="Art Source Selector">
         <button
-          className="btn"
-          style={{
-            background:
-              source === "Pexels"
-                ? "var(--primary-color, #6A0DAD)"
-                : "var(--base-light, #00ffff)",
-            color: "white",
-            borderBottom: source === "Pexels" ? "3px solid var(--accent-color, #FF69B4)" : "none",
-            opacity: source === "Pexels" ? 1 : 0.72,
-            fontWeight: source === "Pexels" ? 700 : 500,
-          }}
+          className={`art-feed-source-tab${source === "Pexels" ? " active" : ""}`}
+          tabIndex={0}
+          role="tab"
+          aria-selected={source === "Pexels"}
           onClick={() => setSource("Pexels")}
-          aria-pressed={source === "Pexels"}
         >
           Pexels
         </button>
         <button
-          className="btn"
-          style={{
-            background:
-              source === "Pixabay"
-                ? "var(--primary-color, #6A0DAD)"
-                : "var(--base-light, #00ffff)",
-            color: "white",
-            borderBottom: source === "Pixabay" ? "3px solid var(--accent-color, #FF69B4)" : "none",
-            opacity: source === "Pixabay" ? 1 : 0.72,
-            fontWeight: source === "Pixabay" ? 700 : 500,
-          }}
+          className={`art-feed-source-tab${source === "Pixabay" ? " active" : ""}`}
+          tabIndex={0}
+          role="tab"
+          aria-selected={source === "Pixabay"}
           onClick={() => setSource("Pixabay")}
-          aria-pressed={source === "Pixabay"}
         >
           Pixabay
         </button>

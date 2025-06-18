@@ -11,8 +11,8 @@ asset bundle.js 1.45 MiB [emitted] (name: main)
 asset index.html 1.98 KiB [emitted]
 runtime modules 27.5 KiB 14 modules
 modules by path ./node_modules/ 1.24 MiB 31 modules
-modules by path ./src/ 55.3 KiB
-  modules by path ./src/*.js 42.3 KiB 7 modules
+modules by path ./src/ 56 KiB
+  modules by path ./src/*.js 43.1 KiB 7 modules
   modules by path ./src/*.css 13 KiB
     ./src/index.css 2.23 KiB [built] [code generated]
     + 3 modules
@@ -22,14 +22,24 @@ modules by path ./.ve/ 15.1 KiB
     ./.ve/EditorOverlay.css 2.25 KiB [built] [code generated]
     ./node_modules/css-loader/dist/cjs.js!./.ve/EditorOverlay.css 697 bytes [built] [code generated]
   ./.ve/EditorOverlay.jsx 1.58 KiB [built] [code generated]
-webpack 5.99.9 compiled successfully in 2081 ms
+webpack 5.99.9 compiled successfully in 1781 ms
 assets by status 1.98 KiB [cached] 1 asset
 assets by path *.js 1.47 MiB
   asset bundle.js 1.45 MiB [emitted] (name: main)
-  asset main.4586543d2a83bc5f2a5b.hot-update.js 23.7 KiB [emitted] [immutable] [hmr] (name: main)
-asset main.4586543d2a83bc5f2a5b.hot-update.json 28 bytes [emitted] [immutable] [hmr]
-Entrypoint main 1.47 MiB = bundle.js 1.45 MiB main.4586543d2a83bc5f2a5b.hot-update.js 23.7 KiB
+  asset main.09bc2e4bf8ac807cfc73.hot-update.js 23.1 KiB [emitted] [immutable] [hmr] (name: main)
+asset main.09bc2e4bf8ac807cfc73.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 1.47 MiB = bundle.js 1.45 MiB main.09bc2e4bf8ac807cfc73.hot-update.js 23.1 KiB
 cached modules 1.29 MiB [cached] 46 modules
 runtime modules 27.5 KiB 14 modules
-./src/ArtFeed.js 18.7 KiB [built] [code generated]
-webpack 5.99.9 compiled successfully in 254 ms
+./src/ArtFeed.js 18.2 KiB [built] [code generated]
+webpack 5.99.9 compiled successfully in 200 ms
+assets by status 1.98 KiB [cached] 1 asset
+assets by path *.js 1.46 MiB
+  asset bundle.js 1.45 MiB [emitted] (name: main)
+  asset main.81316b285d93b5bc0c16.hot-update.js 12.1 KiB [emitted] [immutable] [hmr] (name: main)
+asset main.81316b285d93b5bc0c16.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 1.46 MiB = bundle.js 1.45 MiB main.81316b285d93b5bc0c16.hot-update.js 12.1 KiB
+cached modules 1.3 MiB [cached] 46 modules
+runtime modules 27.5 KiB 14 modules
+./node_modules/css-loader/dist/cjs.js!./src/App.css 9.4 KiB [built] [code generated]
+webpack 5.99.9 compiled successfully in 76 ms

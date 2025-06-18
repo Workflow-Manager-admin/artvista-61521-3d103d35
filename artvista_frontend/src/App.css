@@ -183,6 +183,84 @@ body {
   transition: background 0.34s, box-shadow 0.22s;
 }
 
+/* ArtFeed Source Selector Tabs */
+.art-feed-source-tabs {
+  display: flex;
+  gap: 0.7em;
+  margin-bottom: 0.85rem;
+  justify-content: flex-start;
+  align-items: center;
+  background: none;
+}
+
+.art-feed-source-tab {
+  font-family: 'Inter','Rubik','Segoe UI',sans-serif;
+  font-size: 1.17rem;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  color: var(--primary-color, #8d5fc5);
+  background: var(--secondary-tint, #f6f2fe);
+  border: none;
+  border-radius: 16px 16px 0 0;
+  outline: none;
+  padding: 12px 32px 11px 32px;
+  margin: 0;
+  box-shadow: 0 1px 9px 0 rgba(141, 95, 197, 0.06);
+  cursor: pointer;
+  position: relative;
+  opacity: 0.86;
+  transition:
+    background 0.21s cubic-bezier(0.5,0.22,0.27,1),
+    color 0.19s,
+    box-shadow 0.17s,
+    opacity 0.21s,
+    font-weight 0.15s;
+}
+
+.art-feed-source-tab.active,
+.art-feed-source-tab:focus-visible {
+  background: linear-gradient(95deg, var(--primary-tint, #d4bee8) 80%, var(--accent-tint, #ffe2f1));
+  color: var(--primary-color, #8d5fc5);
+  font-weight: 800;
+  opacity: 1;
+  box-shadow: 0 5px 18px 0 rgba(141, 95, 197, 0.10);
+}
+
+.art-feed-source-tab.active::after {
+  content: "";
+  display: block;
+  position: absolute;
+  left: 17%;
+  right: 17%;
+  bottom: -2px;
+  height: 4px;
+  border-radius: 2px 2px 3px 3px;
+  background: linear-gradient(90deg, var(--accent-color, #ff89b6), var(--primary-color, #8d5fc5) 65%);
+  box-shadow: 0 0 7px 1px var(--accent-tint, #ffe2f1);
+  transition: all 0.16s;
+  z-index: 2;
+}
+
+.art-feed-source-tab:not(.active) {
+  background: var(--secondary-tint, #f6f2fe);
+  color: var(--primary-color, #8d5fc5);
+  font-weight: 600;
+  opacity: 0.82;
+}
+
+.art-feed-source-tab:hover:not(.active),
+.art-feed-source-tab:focus-visible:not(.active) {
+  background: var(--accent-tint, #ffe2f1);
+  opacity: 1;
+}
+
+@media (max-width: 700px) {
+  .art-feed-source-tab {
+    padding: 10px 18px 8px 18px;
+    font-size: 1.01rem;
+  }
+}
+
 .art-feed-title {
   color: var(--primary-color);
   font-family: 'Rubik','Inter','Segoe UI',sans-serif;
