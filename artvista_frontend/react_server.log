@@ -11,8 +11,8 @@ asset bundle.js 3.02 MiB [emitted] (name: main)
 asset index.html 1.98 KiB [emitted]
 runtime modules 27.5 KiB 14 modules
 modules by path ./node_modules/ 2.69 MiB 46 modules
-modules by path ./src/ 44.3 KiB
-  modules by path ./src/*.js 31.4 KiB 8 modules
+modules by path ./src/ 50.3 KiB
+  modules by path ./src/*.js 37.3 KiB 8 modules
   modules by path ./src/*.css 13 KiB
     ./src/index.css 2.23 KiB [built] [code generated]
     + 3 modules
@@ -22,14 +22,24 @@ modules by path ./.ve/ 15.1 KiB
     ./.ve/EditorOverlay.css 2.25 KiB [built] [code generated]
     ./node_modules/css-loader/dist/cjs.js!./.ve/EditorOverlay.css 697 bytes [built] [code generated]
   ./.ve/EditorOverlay.jsx 1.58 KiB [built] [code generated]
-webpack 5.99.9 compiled successfully in 2363 ms
+webpack 5.99.9 compiled successfully in 2303 ms
 assets by status 1.98 KiB [cached] 1 asset
-assets by path *.js 3.04 MiB
-  asset bundle.js 3.02 MiB [emitted] (name: main)
-  asset main.f8b677120e1ec6a3b9d8.hot-update.js 20.2 KiB [emitted] [immutable] [hmr] (name: main)
-asset main.f8b677120e1ec6a3b9d8.hot-update.json 28 bytes [emitted] [immutable] [hmr]
-Entrypoint main 3.04 MiB = bundle.js 3.02 MiB main.f8b677120e1ec6a3b9d8.hot-update.js 20.2 KiB
+assets by path *.js 3.05 MiB
+  asset bundle.js 3.03 MiB [emitted] (name: main)
+  asset main.c046447616ba946ae5a3.hot-update.js 21.8 KiB [emitted] [immutable] [hmr] (name: main)
+asset main.c046447616ba946ae5a3.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 3.05 MiB = bundle.js 3.03 MiB main.c046447616ba946ae5a3.hot-update.js 21.8 KiB
 cached modules 2.74 MiB [cached] 62 modules
 runtime modules 27.5 KiB 14 modules
-./src/ArtFeed.js 15 KiB [built] [code generated]
-webpack 5.99.9 compiled successfully in 201 ms
+./src/ArtFeed.js 16.2 KiB [built] [code generated]
+webpack 5.99.9 compiled successfully in 217 ms
+assets by status 1.98 KiB [cached] 1 asset
+assets by path *.js 3.05 MiB
+  asset bundle.js 3.03 MiB [emitted] (name: main)
+  asset main.4784b2e7daad8a9a4198.hot-update.js 23 KiB [emitted] [immutable] [hmr] (name: main)
+asset main.4784b2e7daad8a9a4198.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 3.05 MiB = bundle.js 3.03 MiB main.4784b2e7daad8a9a4198.hot-update.js 23 KiB
+cached modules 2.74 MiB [cached] 62 modules
+runtime modules 27.5 KiB 14 modules
+./src/ArtFeed.js 17.4 KiB [built] [code generated]
+webpack 5.99.9 compiled successfully in 177 ms

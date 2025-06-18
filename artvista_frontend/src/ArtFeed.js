@@ -17,7 +17,44 @@ function ArtFeed() {
   const [apiError, setApiError] = useState(null);
   const [source, setSource] = useState("Pexels"); // ["Pexels"|"Pixabay"]
   const { user } = useAuth();
-  const [saved, setSaved] = useState({});
+  const [saved, setSaved] = useState({}); // Format: { [artworkId]: { ...meta, docId?, isLocal: true? } }
+
+  // Sync user or guest saved artworks
+  useEffect(() => {
+    if (user) {
+      // Firestore sync
+      const q = query(
+        collection(firestore, "collections"),
+        where("uid", "==", user.uid)
+      );
+      const unsub = onSnapshot(q, (snap) => {
+        const list = {};
+        snap.docs.forEach((d) => {
+          if (d.data().artworkId)
+            list[d.data().artworkId] = { ...d.data(), docId: d.id, isLocal: false };
+        });
+        setSaved(list);
+      });
+      return () => unsub();
+    } else {
+      // Guest: sync from localStorage
+      function getLocal() {
+        try {
+          const items = JSON.parse(localStorage.getItem("guest_collections") || "[]");
+          const coll = {};
+          items.forEach((rec) => {
+            if (rec.artworkId) coll[rec.artworkId] = { ...rec, isLocal: true };
+          });
+          setSaved(coll);
+        } catch {
+          setSaved({});
+        }
+      }
+      getLocal();
+      window.addEventListener("storage", getLocal); // Sync if changed in other tabs
+      return () => window.removeEventListener("storage", getLocal);
+    }
+  }, [user]);
 
   // --- SEARCH/FILTER STATE ---
   const [keyword, setKeyword] = useState("");
@@ -289,14 +326,10 @@ function ArtFeed() {
 
   // --- Art grid unified rendering for both APIs ---
   function ArtGrid() {
-    async function handleSave(art, isPexels) {
-      if (!user) {
-        alert("Login to save artworks");
-        return;
-      }
-      await addDoc(collection(firestore, "collections"), {
+    // Helpers for localStorage collections
+    function saveToLocal(art, isPexels) {
+      let item = {
         artworkId: "" + art.id,
-        uid: user.uid,
         imageUrl: isPexels
           ? art.src && art.src.medium
             ? art.src.medium
@@ -305,17 +338,69 @@ function ArtFeed() {
         link: isPexels ? art.url : art.pageURL,
         author: isPexels ? art.photographer : art.user,
         title: isPexels ? art.alt : (art.tags ? art.tags.split(",")[0] : "Artwork"),
-        ts: Date.now()
-      });
-    }
-    async function handleUnsave(artworkId) {
-      if (!user || !saved[artworkId]) return;
+        ts: Date.now(),
+        isLocal: true
+      };
+      let arr;
       try {
-        await deleteDoc(doc(firestore, "collections", saved[artworkId].docId));
-      } catch (e) {
-        alert("Failed to unsave artwork");
+        arr = JSON.parse(localStorage.getItem("guest_collections") || "[]");
+      } catch {
+        arr = [];
+      }
+      if (!arr.some(r => r.artworkId === item.artworkId)) {
+        arr.unshift(item);
+        localStorage.setItem("guest_collections", JSON.stringify(arr));
+        setSaved(s => ({ ...s, [item.artworkId]: item })); // Optimistic update
       }
     }
+    function removeFromLocal(artworkId) {
+      let arr;
+      try {
+        arr = JSON.parse(localStorage.getItem("guest_collections") || "[]");
+      } catch {
+        arr = [];
+      }
+      arr = arr.filter(r => r.artworkId !== artworkId);
+      localStorage.setItem("guest_collections", JSON.stringify(arr));
+      setSaved(s => {
+        let copy = { ...s };
+        delete copy[artworkId];
+        return copy;
+      });
+    }
+
+    // --- Save/unsave handling (user/authed or guest) ---
+    async function handleSave(art, isPexels) {
+      if (user) {
+        await addDoc(collection(firestore, "collections"), {
+          artworkId: "" + art.id,
+          uid: user.uid,
+          imageUrl: isPexels
+            ? art.src && art.src.medium
+              ? art.src.medium
+              : art.src.original
+            : art.webformatURL,
+          link: isPexels ? art.url : art.pageURL,
+          author: isPexels ? art.photographer : art.user,
+          title: isPexels ? art.alt : (art.tags ? art.tags.split(",")[0] : "Artwork"),
+          ts: Date.now()
+        });
+      } else {
+        saveToLocal(art, isPexels);
+      }
+    }
+    async function handleUnsave(artworkId) {
+      if (user && saved[artworkId] && saved[artworkId].docId) {
+        try {
+          await deleteDoc(doc(firestore, "collections", saved[artworkId].docId));
+        } catch (e) {
+          alert("Failed to unsave artwork");
+        }
+      } else if (!user && saved[artworkId] && saved[artworkId].isLocal) {
+        removeFromLocal(artworkId);
+      }
+    }
+
     return (
       <div className="art-feed-grid">
         {artworks.length === 0 && (
@@ -339,7 +424,7 @@ function ArtFeed() {
             ? art.alt || "Artwork"
             : art.tags ? art.tags.split(",")[0] : "Artwork";
           const artworkId = "" + art.id;
-          const isSaved = !!user && !!saved[artworkId];
+          const isSaved = saved[artworkId];
 
           return (
             <div className="art-feed-card" key={art.id || art.imageURL || idx}>
@@ -359,37 +444,23 @@ function ArtFeed() {
                 <span className="art-feed-author">
                   {author ? `By ${author}` : ""}
                 </span>
-                {user && (
-                  isSaved ? (
-                    <button
-                      className="btn"
-                      type="button"
-                      style={{
-                        background: "#fff0f4",
-                        color: "#6A0DAD",
-                        fontWeight: 600,
-                        fontSize: "0.97em"
-                      }}
-                      onClick={() => handleUnsave(artworkId)}
-                    >
-                      Unsave
-                    </button>
-                  ) : (
-                    <button
-                      className="btn"
-                      type="button"
-                      style={{
-                        background: "#d4bee8",
-                        color: "#6A0DAD",
-                        fontWeight: 600,
-                        fontSize: "0.97em"
-                      }}
-                      onClick={() => handleSave(art, isPexels)}
-                    >
-                      Save
-                    </button>
-                  )
-                )}
+                <button
+                  className="btn"
+                  type="button"
+                  style={{
+                    background: isSaved ? "#fff0f4" : "#d4bee8",
+                    color: "#6A0DAD",
+                    fontWeight: 600,
+                    fontSize: "0.97em"
+                  }}
+                  onClick={() =>
+                    isSaved
+                      ? handleUnsave(artworkId)
+                      : handleSave(art, isPexels)
+                  }
+                >
+                  {isSaved ? (user ? "Unsave" : "Remove") : "Save"}
+                </button>
               </div>
             </div>
           );
