@@ -4,6 +4,11 @@
   --text-color: #ffffff;
   --text-secondary: rgba(255, 255, 255, 0.7);
   --border-color: rgba(255, 255, 255, 0.1);
+
+  /* ArtVista Theme */
+  --primary-color: #6A0DAD;
+  --secondary-color: #D8BFD8;
+  --accent-color: #FF69B4;
 }
 
 body {
@@ -105,4 +110,80 @@ body {
 .btn-large {
   padding: 12px 24px;
   font-size: 1.1rem;
+}
+
+/* ArtVista ArtFeed Styles */
+.art-feed-section {
+  margin-top: 2rem;
+  padding-bottom: 2rem;
+}
+.art-feed-title {
+  color: var(--primary-color, #6A0DAD);
+  font-size: 2.4rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+.art-feed-loading,
+.art-feed-error,
+.art-feed-empty {
+  color: var(--accent-color, #FF69B4);
+  font-size: 1.12rem;
+  margin: 2em 0;
+}
+.art-feed-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 22px;
+  margin-top: 6px;
+}
+.art-feed-card {
+  background: linear-gradient(123deg, var(--secondary-color, #D8BFD8) 0%, #fff0fc 100%);
+  border-radius: 9px;
+  overflow: hidden;
+  box-shadow: 0 1px 14px 0 rgba(106, 13, 173, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  transition: box-shadow 0.13s;
+  border: 1px solid var(--border-color, #EEE);
+}
+.art-feed-card:hover {
+  box-shadow: 0 2px 18px 0 rgba(255, 105, 180, 0.14);
+}
+.art-feed-image {
+  width: 100%;
+  display: block;
+  height: 220px;
+  object-fit: cover;
+  transition: filter 0.14s;
+  border-bottom: 1px solid var(--secondary-color, #D8BFD8);
+}
+.art-feed-card:hover .art-feed-image {
+  filter: brightness(0.95) saturate(1.08) blur(0.5px);
+}
+.art-feed-meta {
+  padding: 0.7em 1em 1em 1em;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.art-feed-author {
+  font-size: 1.02rem;
+  color: var(--primary-color, #6A0DAD);
+  font-weight: 500;
+}
+
+/* Responsive for mobile screens */
+@media (max-width: 700px) {
+  .art-feed-title {
+    font-size: 1.4rem;
+  }
+  .art-feed-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  .art-feed-image {
+    height: 185px;
+  }
 }

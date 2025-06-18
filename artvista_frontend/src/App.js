@@ -1,11 +1,12 @@
 import React from 'react';
 import './App.css';
 import Sidebar from './Sidebar';
+import ArtFeed from './ArtFeed';
 
 function App() {
   // PUBLIC_INTERFACE
   /**
-   * Main application container, now with news sidebar.
+   * Main application container with art feed and news sidebar.
    */
   return (
     <div className="app">
@@ -13,9 +14,10 @@ function App() {
         <div className="container">
           <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
             <div className="logo">
-              <span className="logo-symbol">*</span> KAVIA AI
+              <span className="logo-symbol" aria-label="star" style={{color: 'var(--primary-color, #6A0DAD)'}}>*</span> ArtVista
             </div>
-            <button className="btn">Template Button</button>
+            {/* Sample Button, replace if needed */}
+            <button className="btn" style={{background: 'var(--accent-color, #FF69B4)'}}>Explore</button>
           </div>
         </div>
       </nav>
@@ -28,17 +30,7 @@ function App() {
       }}>
         <main style={{ flex: 1 }}>
           <div className="container">
-            <div className="hero">
-              <div className="subtitle">AI Workflow Manager Template</div>
-              
-              <h1 className="title">artvista_frontend</h1>
-              
-              <div className="description">
-                Start building your application.
-              </div>
-              
-              <button className="btn btn-large">Button</button>
-            </div>
+            <ArtFeed />
           </div>
         </main>
         <Sidebar />
