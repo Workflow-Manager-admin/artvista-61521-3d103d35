@@ -1,51 +1,82 @@
 import React, { useEffect, useState } from "react";
 import { firestore } from "./firebase";
-import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc } from "firebase/firestore";
+import { collection, query, where, onSnapshot, deleteDoc, doc } from "firebase/firestore";
 import { useAuth } from "./AuthContext";
 
 // PUBLIC_INTERFACE
 /**
- * MyCollection displays and manages per-user saved artworks.
- * Only accessible if user is logged in; disables if not.
+ * MyCollection displays all artworks saved by the user (supports both guest/localStorage and authenticated/Firebase).
+ * Artworks are shown in a grid with a "Remove" button for each item. Removals update UI instantly.
+ * The page uses the main ArtFeed grid visuals for consistency.
+ * - If not logged in, loads/syncs from localStorage "guest_collections"
+ * - If logged in, loads in realtime from Firestore "collections" filtered by uid
  */
 function MyCollection() {
   const { user } = useAuth();
   const [artworks, setArtworks] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch saved artworks for this user
+  // --- Load user's saved artworks ---
   useEffect(() => {
-    if (!user) return;
-    setLoading(true);
-    // Saved artworks collection per user: collection("collections"), filter by uid
-    const q = query(
-      collection(firestore, "collections"),
-      where("uid", "==", user.uid)
-    );
-    const unsub = onSnapshot(q, (snap) => {
-      setArtworks(
-        snap.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }))
-      );
-      setLoading(false);
-    });
-    return () => unsub();
+    if (user) {
+      // Authenticated: Firestore sync (realtime)
+      setLoading(true);
+      const q = query(collection(firestore, "collections"), where("uid", "==", user.uid));
+      const unsub = onSnapshot(q, (snap) => {
+        setArtworks(
+          snap.docs.map((d) => ({
+            ...d.data(),
+            id: d.id,         // Firestore doc id
+            isLocal: false
+          }))
+        );
+        setLoading(false);
+      });
+      return () => unsub();
+    } else {
+      // Guest: LocalStorage sync (add listener to stay updated if changed in another tab)
+      function loadLocal() {
+        setLoading(true);
+        try {
+          const arr = JSON.parse(localStorage.getItem("guest_collections") || "[]");
+          setArtworks(arr.map(item => ({
+            ...item,
+            id: item.artworkId,
+            isLocal: true
+          })));
+        } catch {
+          setArtworks([]);
+        }
+        setLoading(false);
+      }
+      loadLocal();
+      window.addEventListener("storage", loadLocal);
+      return () => window.removeEventListener("storage", loadLocal);
+    }
   }, [user]);
 
-  // Remove artwork from collection
+  // --- Remove artwork (localStorage or Firebase) ---
   const handleRemove = async (id) => {
-    try {
-      await deleteDoc(doc(firestore, "collections", id));
-    } catch (e) {
-      alert("Failed to remove artwork");
+    if (user) {
+      // Authenticated: remove from Firestore (UI updates via onSnapshot)
+      try {
+        await deleteDoc(doc(firestore, "collections", id));
+      } catch (e) {
+        alert("Failed to remove artwork");
+      }
+    } else {
+      // Guest: remove from localStorage immediately
+      let arr;
+      try {
+        arr = JSON.parse(localStorage.getItem("guest_collections") || "[]");
+      } catch {
+        arr = [];
+      }
+      arr = arr.filter((rec) => rec.artworkId !== id);
+      localStorage.setItem("guest_collections", JSON.stringify(arr));
+      setArtworks(arr.map(item => ({ ...item, id: item.artworkId, isLocal: true })));
     }
   };
-
-  if (!user) {
-    return <div style={{ padding: 30, fontSize: "1.1em" }}>Login to view your collection.</div>;
-  }
 
   return (
     <section className="art-feed-section" style={{ minHeight: 320 }}>
@@ -53,10 +84,14 @@ function MyCollection() {
       {loading ? (
         <div className="art-feed-loading">Loading collection...</div>
       ) : artworks.length === 0 ? (
-        <div className="art-feed-empty">You haven't saved any artworks yet.</div>
+        <div className="art-feed-empty">
+          {user
+            ? "You haven't saved any artworks yet."
+            : <>You haven't saved any artworks yet.<br /><span style={{ fontSize: "0.95em", color: "#8d5fc5" }}>Log in to sync your collection across devices.</span></>}
+        </div>
       ) : (
         <div className="art-feed-grid">
-          {artworks.map((art) => (
+          {artworks.map(art => (
             <div className="art-feed-card" key={art.id}>
               <a
                 href={art.link}
@@ -78,15 +113,24 @@ function MyCollection() {
                 <button
                   className="btn"
                   type="button"
+                  aria-label="Remove artwork from collection"
                   style={{
                     background: "#fff0f4",
-                    color: "#6A0DAD",
-                    fontWeight: 600,
-                    fontSize: "0.97em",
+                    color: "#c74a77",
+                    fontWeight: 700,
+                    fontSize: "1em",
+                    border: "none",
+                    boxShadow: "none",
+                    cursor: "pointer",
+                    transition: "background 0.19s",
                   }}
                   onClick={() => handleRemove(art.id)}
                 >
-                  Remove
+                  {/* Trash Icon (inline SVG) */}
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                    <svg width="18" height="18" fill="none" stroke="#c74a77" strokeWidth="2" viewBox="0 0 22 22" aria-hidden="true"><path d="M4 7h14M9 11v4M13 11v4M6.2 7l1.14 10.15A2 2 0 0 0 9.33 19h3.34a2 2 0 0 0 1.99-1.85L15.8 7M8 7V5.5A1.5 1.5 0 0 1 9.5 4h3A1.5 1.5 0 0 1 14 5.5V7" /></svg>
+                    Remove
+                  </span>
                 </button>
               </div>
             </div>
