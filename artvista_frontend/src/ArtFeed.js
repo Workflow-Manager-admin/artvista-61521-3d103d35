@@ -183,17 +183,12 @@ function ArtFeed() {
     );
   }
 
-  // --- UI: Search and filter controls ---
+  // --- UI: Search and filter controls, now with improved styles ---
   function SearchBarAndFilters() {
+    // Move marginBottom from the old wrapper to outside for grid separation; remove gap/align here.
     return (
       <form
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 14,
-          marginBottom: 16,
-          alignItems: "center"
-        }}
+        className="art-feed-controls"
         onSubmit={e => e.preventDefault()}
         aria-label="Artwork search/filter controls"
       >
@@ -204,26 +199,13 @@ function ArtFeed() {
           aria-label="Search artworks"
           onChange={e => setKeyword(e.target.value)}
           placeholder='Search by keyword (e.g. "mandala", "cat drawing", "pencil sketch")'
-          style={{
-            padding: "8px 14px",
-            borderRadius: 14,
-            border: "1px solid var(--secondary-color, #D8BFD8)",
-            minWidth: 170,
-            fontSize: "1.09rem",
-            flex: "2"
-          }}
+          className="art-feed-search"
         />
         <select
           aria-label="Filter by art style"
           value={style}
           onChange={e => setStyle(e.target.value)}
-          style={{
-            padding: "8px 10px",
-            borderRadius: 12,
-            border: "1px solid var(--secondary-color, #D8BFD8)",
-            fontSize: "1.06rem",
-            background: "#f6f2fe"
-          }}
+          className="art-feed-select"
         >
           {styleOptions.map(opt =>
             <option value={opt.value} key={opt.value}>
@@ -235,13 +217,7 @@ function ArtFeed() {
           aria-label="Filter by color"
           value={color}
           onChange={e => setColor(e.target.value)}
-          style={{
-            padding: "8px 10px",
-            borderRadius: 12,
-            border: "1px solid var(--secondary-color, #D8BFD8)",
-            fontSize: "1.06rem",
-            background: "#f6f2fe"
-          }}
+          className="art-feed-select"
         >
           {colorOptions.map(opt =>
             <option value={opt.value} key={opt.value}>
@@ -253,13 +229,7 @@ function ArtFeed() {
           aria-label="Filter by orientation"
           value={orientation}
           onChange={e => setOrientation(e.target.value)}
-          style={{
-            padding: "8px 10px",
-            borderRadius: 12,
-            border: "1px solid var(--secondary-color, #D8BFD8)",
-            fontSize: "1.06rem",
-            background: "#f6f2fe"
-          }}
+          className="art-feed-select"
         >
           {orientationOptions.map(opt =>
             <option value={opt.value} key={opt.value}>
@@ -453,8 +423,26 @@ function ArtFeed() {
   return (
     <section className="art-feed-section">
       <h2 className="art-feed-title">Featured Artworks</h2>
-      <SourceTabs />
-      <SearchBarAndFilters />
+
+      {/* Modern filter bar: Source selector and search/filters in flexbox wrapper at the very top */}
+      <div
+        className="art-feed-topbar"
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 18,
+          alignItems: "flex-end",
+          justifyContent: "space-between",
+          marginBottom: 16
+        }}
+      >
+        <div style={{ minWidth: 195, flex: "0 1 auto" }}>
+          <SourceTabs />
+        </div>
+        <div style={{ flex: "3 1 340px", width: "100%", maxWidth: 700 }}>
+          <SearchBarAndFilters />
+        </div>
+      </div>
       {loading && (
         <div className="art-feed-loading">Loading artworks...</div>
       )}
