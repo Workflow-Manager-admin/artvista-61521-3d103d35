@@ -1,15 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { firestore } from "./firebase";
-import { collection, query, where, onSnapshot, deleteDoc, doc } from "firebase/firestore";
 import { useAuth } from "./AuthContext";
 
 // PUBLIC_INTERFACE
 /**
- * MyCollection displays all artworks saved by the user (supports both guest/localStorage and authenticated/Firebase).
+ * MyCollection displays all artworks saved by the user (username-only, via localStorage).
  * Artworks are shown in a grid with a "Remove" button for each item. Removals update UI instantly.
  * The page uses the main ArtFeed grid visuals for consistency.
- * - If not logged in, loads/syncs from localStorage "guest_collections"
- * - If logged in, loads in realtime from Firestore "collections" filtered by uid
+ * - Loads and syncs from localStorage (per-username collection)
+ * - Shows message if not logged in or if collection empty
  */
 function MyCollection() {
   const { user } = useAuth();
@@ -18,64 +16,42 @@ function MyCollection() {
 
   // --- Load user's saved artworks ---
   useEffect(() => {
-    if (user) {
-      // Authenticated: Firestore sync (realtime)
-      setLoading(true);
-      const q = query(collection(firestore, "collections"), where("uid", "==", user.uid));
-      const unsub = onSnapshot(q, (snap) => {
-        setArtworks(
-          snap.docs.map((d) => ({
-            ...d.data(),
-            id: d.id,         // Firestore doc id
-            isLocal: false
-          }))
-        );
-        setLoading(false);
-      });
-      return () => unsub();
-    } else {
-      // Guest: LocalStorage sync (add listener to stay updated if changed in another tab)
-      function loadLocal() {
-        setLoading(true);
-        try {
-          const arr = JSON.parse(localStorage.getItem("guest_collections") || "[]");
-          setArtworks(arr.map(item => ({
-            ...item,
-            id: item.artworkId,
-            isLocal: true
-          })));
-        } catch {
-          setArtworks([]);
-        }
-        setLoading(false);
-      }
-      loadLocal();
-      window.addEventListener("storage", loadLocal);
-      return () => window.removeEventListener("storage", loadLocal);
+    if (!user) {
+      setArtworks([]);
+      setLoading(false);
+      return;
     }
+    function loadLocal() {
+      setLoading(true);
+      try {
+        const arr = JSON.parse(localStorage.getItem(`collections__${user}`) || "[]");
+        setArtworks(arr.map(item => ({
+          ...item,
+          id: item.artworkId,
+          isLocal: true
+        })));
+      } catch {
+        setArtworks([]);
+      }
+      setLoading(false);
+    }
+    loadLocal();
+    window.addEventListener("storage", loadLocal);
+    return () => window.removeEventListener("storage", loadLocal);
   }, [user]);
 
-  // --- Remove artwork (localStorage or Firebase) ---
+  // --- Remove artwork (localStorage only) ---
   const handleRemove = async (id) => {
-    if (user) {
-      // Authenticated: remove from Firestore (UI updates via onSnapshot)
-      try {
-        await deleteDoc(doc(firestore, "collections", id));
-      } catch (e) {
-        alert("Failed to remove artwork");
-      }
-    } else {
-      // Guest: remove from localStorage immediately
-      let arr;
-      try {
-        arr = JSON.parse(localStorage.getItem("guest_collections") || "[]");
-      } catch {
-        arr = [];
-      }
-      arr = arr.filter((rec) => rec.artworkId !== id);
-      localStorage.setItem("guest_collections", JSON.stringify(arr));
-      setArtworks(arr.map(item => ({ ...item, id: item.artworkId, isLocal: true })));
+    if (!user) return;
+    let arr;
+    try {
+      arr = JSON.parse(localStorage.getItem(`collections__${user}`) || "[]");
+    } catch {
+      arr = [];
     }
+    arr = arr.filter((rec) => rec.artworkId !== id);
+    localStorage.setItem(`collections__${user}`, JSON.stringify(arr));
+    setArtworks(arr.map(item => ({ ...item, id: item.artworkId, isLocal: true })));
   };
 
   return (
@@ -83,11 +59,13 @@ function MyCollection() {
       <h2 className="art-feed-title">My Collection</h2>
       {loading ? (
         <div className="art-feed-loading">Loading collection...</div>
+      ) : !user ? (
+        <div className="art-feed-empty">
+          Please log in with a username to view your collection.
+        </div>
       ) : artworks.length === 0 ? (
         <div className="art-feed-empty">
-          {user
-            ? "You haven't saved any artworks yet."
-            : <>You haven't saved any artworks yet.<br /><span style={{ fontSize: "0.95em", color: "#8d5fc5" }}>Log in to sync your collection across devices.</span></>}
+          You haven't saved any artworks yet.
         </div>
       ) : (
         <div className="art-feed-grid">

@@ -31,7 +31,7 @@ function AuthGateApp() {
             <span className="logo-symbol" aria-label="star">*</span> ArtVista
           </div>
           <div style={{ color: "var(--text-secondary)", fontSize: "1.16rem", maxWidth: 340, margin: "0 auto 25px", textAlign: "center" }}>
-            Welcome to ArtVista! Please log in or sign up to access the art feed and your collection.
+            Welcome to ArtVista! Please enter a username to continue.
           </div>
         </div>
         <div style={{ minWidth: 320, maxWidth: 450, width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>

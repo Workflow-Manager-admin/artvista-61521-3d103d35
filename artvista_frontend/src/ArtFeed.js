@@ -1,15 +1,12 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useAuth } from "./AuthContext";
-import { firestore } from "./firebase";
-import { collection, addDoc, deleteDoc, query, where, onSnapshot } from "firebase/firestore";
-import { doc } from "firebase/firestore";
 
 // PUBLIC_INTERFACE
 /**
  * ArtFeed displays a responsive image grid with artworks from Pexels and Pixabay APIs.
  * Applies ArtVista's color theme for cohesive look.
  * Live keyword search & filter UI for style, color, orientation; fetches update as user types or changes filters.
- * Allows user to switch art source with tabs, and saving/unsaving artworks tied to user account.
+ * Allows user to switch art source with tabs, and saving/unsaving artworks tied to user account (or localStorage by username).
  */
 function ArtFeed() {
   const [artworks, setArtworks] = useState([]);
@@ -17,43 +14,29 @@ function ArtFeed() {
   const [apiError, setApiError] = useState(null);
   const [source, setSource] = useState("Pexels"); // ["Pexels"|"Pixabay"]
   const { user } = useAuth();
-  const [saved, setSaved] = useState({}); // Format: { [artworkId]: { ...meta, docId?, isLocal: true? } }
+  const [saved, setSaved] = useState({}); // Format: { [artworkId]: { ...meta, isLocal: true } }
 
-  // Sync user or guest saved artworks
+  // Sync saved artworks: always localStorage, keyed by username
   useEffect(() => {
-    if (user) {
-      // Firestore sync
-      const q = query(
-        collection(firestore, "collections"),
-        where("uid", "==", user.uid)
-      );
-      const unsub = onSnapshot(q, (snap) => {
-        const list = {};
-        snap.docs.forEach((d) => {
-          if (d.data().artworkId)
-            list[d.data().artworkId] = { ...d.data(), docId: d.id, isLocal: false };
-        });
-        setSaved(list);
-      });
-      return () => unsub();
-    } else {
-      // Guest: sync from localStorage
-      function getLocal() {
-        try {
-          const items = JSON.parse(localStorage.getItem("guest_collections") || "[]");
-          const coll = {};
-          items.forEach((rec) => {
-            if (rec.artworkId) coll[rec.artworkId] = { ...rec, isLocal: true };
-          });
-          setSaved(coll);
-        } catch {
+    function getLocal() {
+      try {
+        if (!user) {
           setSaved({});
+          return;
         }
+        const items = JSON.parse(localStorage.getItem(`collections__${user}`) || "[]");
+        const coll = {};
+        items.forEach((rec) => {
+          if (rec.artworkId) coll[rec.artworkId] = { ...rec, isLocal: true };
+        });
+        setSaved(coll);
+      } catch {
+        setSaved({});
       }
-      getLocal();
-      window.addEventListener("storage", getLocal); // Sync if changed in other tabs
-      return () => window.removeEventListener("storage", getLocal);
     }
+    getLocal();
+    window.addEventListener("storage", getLocal); // Sync if changed in other tabs
+    return () => window.removeEventListener("storage", getLocal);
   }, [user]);
 
   // --- SEARCH/FILTER STATE ---
@@ -173,26 +156,6 @@ function ArtFeed() {
     };
     // eslint-disable-next-line
   }, [keyword, style, color, orientation, source]);
-
-  // Sync user's saved artworks (same as before)
-  useEffect(() => {
-    if (!user) {
-      setSaved({});
-      return;
-    }
-    const q = query(
-      collection(firestore, "collections"),
-      where("uid", "==", user.uid)
-    );
-    const unsub = onSnapshot(q, (snap) => {
-      const list = {};
-      snap.docs.forEach((d) => {
-        if (d.data().artworkId) list[d.data().artworkId] = { ...d.data(), docId: d.id };
-      });
-      setSaved(list);
-    });
-    return () => unsub();
-  }, [user]);
 
   // --- UI: Source Tabs ---
   function SourceTabs() {
@@ -326,8 +289,17 @@ function ArtFeed() {
 
   // --- Art grid unified rendering for both APIs ---
   function ArtGrid() {
-    // Helpers for localStorage collections
+    // Helpers for localStorage collections (per-username)
+    function getCollArr() {
+      if (!user) return [];
+      try {
+        return JSON.parse(localStorage.getItem(`collections__${user}`) || "[]");
+      } catch {
+        return [];
+      }
+    }
     function saveToLocal(art, isPexels) {
+      if (!user) return;
       let item = {
         artworkId: "" + art.id,
         imageUrl: isPexels
@@ -341,27 +313,18 @@ function ArtFeed() {
         ts: Date.now(),
         isLocal: true
       };
-      let arr;
-      try {
-        arr = JSON.parse(localStorage.getItem("guest_collections") || "[]");
-      } catch {
-        arr = [];
-      }
+      let arr = getCollArr();
       if (!arr.some(r => r.artworkId === item.artworkId)) {
         arr.unshift(item);
-        localStorage.setItem("guest_collections", JSON.stringify(arr));
+        localStorage.setItem(`collections__${user}`, JSON.stringify(arr));
         setSaved(s => ({ ...s, [item.artworkId]: item })); // Optimistic update
       }
     }
     function removeFromLocal(artworkId) {
-      let arr;
-      try {
-        arr = JSON.parse(localStorage.getItem("guest_collections") || "[]");
-      } catch {
-        arr = [];
-      }
+      if (!user) return;
+      let arr = getCollArr();
       arr = arr.filter(r => r.artworkId !== artworkId);
-      localStorage.setItem("guest_collections", JSON.stringify(arr));
+      localStorage.setItem(`collections__${user}`, JSON.stringify(arr));
       setSaved(s => {
         let copy = { ...s };
         delete copy[artworkId];
@@ -369,36 +332,12 @@ function ArtFeed() {
       });
     }
 
-    // --- Save/unsave handling (user/authed or guest) ---
+    // --- Save/unsave handling (username/localStorage only) ---
     async function handleSave(art, isPexels) {
-      if (user) {
-        await addDoc(collection(firestore, "collections"), {
-          artworkId: "" + art.id,
-          uid: user.uid,
-          imageUrl: isPexels
-            ? art.src && art.src.medium
-              ? art.src.medium
-              : art.src.original
-            : art.webformatURL,
-          link: isPexels ? art.url : art.pageURL,
-          author: isPexels ? art.photographer : art.user,
-          title: isPexels ? art.alt : (art.tags ? art.tags.split(",")[0] : "Artwork"),
-          ts: Date.now()
-        });
-      } else {
-        saveToLocal(art, isPexels);
-      }
+      saveToLocal(art, isPexels);
     }
     async function handleUnsave(artworkId) {
-      if (user && saved[artworkId] && saved[artworkId].docId) {
-        try {
-          await deleteDoc(doc(firestore, "collections", saved[artworkId].docId));
-        } catch (e) {
-          alert("Failed to unsave artwork");
-        }
-      } else if (!user && saved[artworkId] && saved[artworkId].isLocal) {
-        removeFromLocal(artworkId);
-      }
+      removeFromLocal(artworkId);
     }
 
     return (
@@ -451,7 +390,7 @@ function ArtFeed() {
                   className="btn"
                   aria-label={
                     isSaved
-                      ? (user ? "Remove from your collection" : "Remove from saved")
+                      ? "Remove from your collection"
                       : "Save to your collection"
                   }
                   style={{
@@ -497,7 +436,7 @@ function ArtFeed() {
                       marginLeft: 4,
                       fontWeight: 600
                     }}>
-                      {isSaved ? (user ? "Saved" : "Saved") : "Save"}
+                      {isSaved ? "Saved" : "Save"}
                     </span>
                   </span>
                 </button>

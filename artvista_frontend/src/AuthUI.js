@@ -1,49 +1,16 @@
 import React, { useState } from "react";
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
-  signInWithPopup,
-  GoogleAuthProvider
-} from "firebase/auth";
 import { useAuth } from "./AuthContext";
 
 // PUBLIC_INTERFACE
 /**
- * Render login/logout/signup UI and expose auth actions.
- * - Shows login/sign up form if not logged in
- * - Shows logout button and user avatar/email if logged in
+ * Render username login/logout UI and expose actions.
+ * - Shows username prompt if not logged in
+ * - Shows logout button and username if logged in
  */
 function AuthUI() {
-  const { user, loading, auth } = useAuth();
-  const [isSignup, setIsSignup] = useState(false);
-  const [email, setEmail] = useState("");
-  const [pw, setPw] = useState("");
+  const { user, loading, login, logout } = useAuth();
+  const [input, setInput] = useState("");
   const [error, setError] = useState("");
-
-  // Switch between login/signup
-  const handleAuthAction = async (e) => {
-    e.preventDefault();
-    setError("");
-    try {
-      if (isSignup) {
-        await createUserWithEmailAndPassword(auth, email, pw);
-      } else {
-        await signInWithEmailAndPassword(auth, email, pw);
-      }
-    } catch (err) {
-      setError(err.message || "Auth error");
-    }
-  };
-
-  const handleGoogle = async () => {
-    setError("");
-    try {
-      await signInWithPopup(auth, new GoogleAuthProvider());
-    } catch (err) {
-      setError(err.message || "Google sign-in error");
-    }
-  };
 
   if (loading) {
     return <span style={{ color: "#6A0DAD" }}>Loading auth...</span>;
@@ -52,19 +19,6 @@ function AuthUI() {
   if (user) {
     return (
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        {user.photoURL && (
-          <img
-            src={user.photoURL}
-            alt="profile"
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: "50%",
-              border: "1.5px solid #6A0DAD",
-              marginRight: 5,
-            }}
-          />
-        )}
         <span
           style={{
             color: "#6A0DAD",
@@ -73,12 +27,12 @@ function AuthUI() {
             marginRight: 8,
           }}
         >
-          {user.displayName || user.email}
+          {user}
         </span>
         <button
           className="btn"
           style={{ padding: "6px 16px", fontSize: "1em" }}
-          onClick={() => signOut(auth)}
+          onClick={logout}
         >
           Logout
         </button>
@@ -86,84 +40,73 @@ function AuthUI() {
     );
   }
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const trimmed = (input || "").trim();
+    if (!trimmed || trimmed.length < 3) {
+      setError("Username must be at least 3 characters.");
+      return;
+    }
+    if (/[^a-zA-Z0-9_\-]/.test(trimmed)) {
+      setError("Username can only contain letters, numbers, _ or -");
+      return;
+    }
+    setError("");
+    login(trimmed);
+  };
+
   return (
     <form
-      onSubmit={handleAuthAction}
+      onSubmit={handleSubmit}
       style={{
         display: "flex",
+        flexDirection: "column",
         alignItems: "center",
-        gap: 8,
+        gap: 12,
         margin: 0,
+        minWidth: 240,
+        width: "100%",
       }}
-      aria-label={isSignup ? "Sign up form" : "Login form"}
+      aria-label="Username login form"
     >
       <input
-        type="email"
-        placeholder="Email"
+        type="text"
+        placeholder="Enter a username"
         required
         autoFocus
+        value={input}
+        minLength={3}
+        maxLength={18}
+        autoComplete="off"
         style={{
-          padding: "7px 10px",
-          borderRadius: 7,
+          padding: "10px 16px",
+          borderRadius: 10,
           border: "1px solid #aaa",
-          minWidth: 120,
+          fontSize: "1.10em",
+          width: "100%",
+          maxWidth: 340,
         }}
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <input
-        type="password"
-        placeholder="Password"
-        required
-        style={{
-          padding: "7px 10px",
-          borderRadius: 7,
-          border: "1px solid #aaa",
-          minWidth: 90,
+        onChange={(e) => {
+          setInput(e.target.value);
+          setError("");
         }}
-        value={pw}
-        onChange={(e) => setPw(e.target.value)}
+        aria-label="Choose a username"
       />
       <button
-        className="btn"
-        style={{ padding: "7px 18px", fontSize: "1em" }}
+        className="btn btn-large"
+        style={{ padding: "11px 28px", fontSize: "1.06em" }}
         type="submit"
       >
-        {isSignup ? "Sign Up" : "Login"}
-      </button>
-      <button
-        type="button"
-        className="btn"
-        style={{
-          background: "#fff",
-          color: "#6A0DAD",
-          border: "1px solid #d4bee8",
-          padding: "7px 14px",
-        }}
-        onClick={handleGoogle}
-      >
-        Google
-      </button>
-      <button
-        type="button"
-        style={{
-          background: "none",
-          border: "none",
-          color: "#8d5fc5",
-          textDecoration: "underline",
-          marginLeft: 8,
-          cursor: "pointer"
-        }}
-        onClick={() => setIsSignup((v) => !v)}
-        aria-label={isSignup ? "Switch to login" : "Switch to sign up"}
-      >
-        {isSignup ? "Have an account? Login" : "New? Sign up"}
+        Start Exploring
       </button>
       {error && (
-        <span style={{ color: "#d8225c", fontSize: "0.94em", marginLeft: 4 }}>
+        <span style={{ color: "#d8225c", fontSize: "0.97em" }}>
           {error}
         </span>
       )}
+      <div style={{ color: "var(--text-secondary)", fontSize: "0.98em", marginTop: 1 }}>
+        No account or password required!
+      </div>
     </form>
   );
 }
