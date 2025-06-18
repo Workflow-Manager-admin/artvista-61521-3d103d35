@@ -8,20 +8,20 @@ function App() {
    * Main application container focusing on the art feed (no news sidebar).
    */
   return (
-    <div className="app">
+    <div className="app" style={{ background: "none" }}>
       <nav className="navbar">
         <div className="container">
-          <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-            <div className="logo">
-              <span className="logo-symbol" aria-label="star" style={{color: 'var(--primary-color, #6A0DAD)'}}>*</span> ArtVista
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+            <div className="logo" tabIndex={0} aria-label="ArtVista Home">
+              <span className="logo-symbol" aria-label="star">*</span> ArtVista
             </div>
-            {/* Sample Button, replace if needed */}
-            <button className="btn" style={{background: 'var(--accent-color, #FF69B4)'}}>Explore</button>
+            {/* Sample Button, replace as needed */}
+            <button className="btn" tabIndex={0}>Explore</button>
           </div>
         </div>
       </nav>
 
-      <main style={{ flex: 1, marginTop: '64px', minHeight: '100vh' }}>
+      <main style={{ flex: 1, marginTop: '86px', minHeight: '100vh', background: "none" }}>
         <div className="container">
           <ArtFeed />
         </div>
